@@ -479,7 +479,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNJ8a_S1KYkYeRvIL1vhqiD-LpxYqOW_FWqafV-LF8MXd7m-0DNW34-bVLHTMOm9iF/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU-ZRIR1vba_Kl846OwiqLCZEVXSUJj-hhIFdZWa62bCJo7Dl24PpdX0ELAQxHIety2g/exec";
 
     let profileOffcanvasInstance = null;
 
@@ -563,7 +563,7 @@
     }
 
     // ==========================================
-    // 1. ฟังก์ชันดึงข้อมูลจาก Cloud ลงมาผสาน (Fetch & Merge)
+    // 1. ฟังก์ชันดึงข้อมูลจาก Cloud (Fetch Data)
     // ==========================================
     async function fetchCloudData() {
         if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return;
@@ -573,64 +573,34 @@
             const data = await res.json();
 
             if (data) {
-                // --- ผสานข้อมูลการลา (Leaves) ---
+                // แทนที่ข้อมูลฝั่ง Local ด้วยข้อมูลล่าสุดจาก Cloud โดยตรง
                 if (data.leaves && Array.isArray(data.leaves)) {
-                    let localLeaves = JSON.parse(localStorage.getItem('leaveData')) || [];
-                    
                     data.leaves.forEach(serverItem => {
                         serverItem.startDate = parseDateToISO(serverItem.startDate);
                         serverItem.endDate = parseDateToISO(serverItem.endDate);
                         if (serverItem.customDays !== undefined && serverItem.customDays !== null && serverItem.customDays !== '') {
                             serverItem.customDays = parseFloat(serverItem.customDays);
                         }
-                        
-                        let idx = localLeaves.findIndex(l => String(l.id) === String(serverItem.id));
-                        if (idx !== -1) {
-                            localLeaves[idx] = serverItem;
-                        } else {
-                            localLeaves.push(serverItem);
-                        }
                     });
-                    
-                    localStorage.setItem('leaveData', JSON.stringify(localLeaves));
+                    localStorage.setItem('leaveData', JSON.stringify(data.leaves));
                 }
 
-                // --- ผสานข้อมูลผู้ใช้งาน (Users) ---
                 if (data.users && Array.isArray(data.users)) {
-                    let localUsers = JSON.parse(localStorage.getItem('users')) || [];
-                    
-                    data.users.forEach(serverUser => {
-                        let uName = String(serverUser.username || '').trim().toLowerCase();
-                        let idx = localUsers.findIndex(u => String(u.username || '').trim().toLowerCase() === uName);
-                        
-                        let formattedUser = {
-                            ...serverUser,
-                            username: String(serverUser.username || '').trim(),
-                            password: String(serverUser.password || '').trim(),
-                            fullName: String(serverUser.fullName || '').trim(),
-                            phone: formatPhoneNumber(serverUser.phone),
-                            dept: String(serverUser.dept || '').trim(),
-                            role: String(serverUser.role || 'user').trim().toLowerCase(),
-                            avatar: serverUser.avatar || defaultAvatar
-                        };
-
-                        if (idx !== -1) {
-                            localUsers[idx] = formattedUser;
-                        } else {
-                            localUsers.push(formattedUser);
-                        }
-                    });
-                    
-                    localStorage.setItem('users', JSON.stringify(localUsers));
+                    let formattedUsers = data.users.map(serverUser => ({
+                        ...serverUser,
+                        username: String(serverUser.username || '').trim(),
+                        password: String(serverUser.password || '').trim(),
+                        fullName: String(serverUser.fullName || '').trim(),
+                        phone: formatPhoneNumber(serverUser.phone),
+                        dept: String(serverUser.dept || '').trim(),
+                        role: String(serverUser.role || 'user').trim().toLowerCase(),
+                        avatar: serverUser.avatar || defaultAvatar
+                    }));
+                    localStorage.setItem('users', JSON.stringify(formattedUsers));
                 }
 
-                // --- ผสานข้อมูลพนักงาน (Employees) ---
                 if (data.employees && Array.isArray(data.employees)) {
-                    let localEmps = JSON.parse(localStorage.getItem('employees')) || [];
-                    
-                    data.employees.forEach(serverEmp => {
-                        let idx = localEmps.findIndex(e => String(e.id) === String(serverEmp.id) || e.name === serverEmp.name);
-                        
+                    let formattedEmps = data.employees.map(serverEmp => {
                         if (typeof serverEmp.quota === 'string' && serverEmp.quota.trim() !== '') {
                             try { serverEmp.quota = JSON.parse(serverEmp.quota); } catch(err){ serverEmp.quota = null; }
                         }
@@ -644,15 +614,9 @@
                             };
                         }
                         serverEmp.phone = formatPhoneNumber(serverEmp.phone);
-
-                        if (idx !== -1) {
-                            localEmps[idx] = serverEmp;
-                        } else {
-                            localEmps.push(serverEmp);
-                        }
+                        return serverEmp;
                     });
-                    
-                    localStorage.setItem('employees', JSON.stringify(localEmps));
+                    localStorage.setItem('employees', JSON.stringify(formattedEmps));
                 }
 
                 loadEmployees();
@@ -672,9 +636,6 @@
         if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return;
         showSyncSpinner(true);
         try {
-            // ดึงข้อมูลล่าสุดจาก Cloud เพื่อเอามา Merge เข้า Local ก่อนส่งบันทึกทับ
-            await fetchCloudData();
-
             const leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
             const employees = JSON.parse(localStorage.getItem('employees')) || [];
             const users = JSON.parse(localStorage.getItem('users')) || [];
@@ -1123,12 +1084,17 @@
         loadEmployees();
     });
 
-    function deleteEmployee(id) {
-        let emps = JSON.parse(localStorage.getItem('employees')) || [];
-        localStorage.setItem('employees', JSON.stringify(emps.filter(emp => emp.id !== id)));
-        syncToCloud();
-        playAudioNotification('success');
-        loadEmployees();
+    // 🟢 แก้ไข: ลบพนักงานออกจาก LocalStorage และส่งค่าซิงค์ขึ้น Cloud ทันที
+    async function deleteEmployee(id) {
+        if (confirm('คุณต้องการลบรายชื่อพนักงานนี้ใช่หรือไม่?')) {
+            let emps = JSON.parse(localStorage.getItem('employees')) || [];
+            emps = emps.filter(emp => String(emp.id) !== String(id));
+            localStorage.setItem('employees', JSON.stringify(emps));
+            
+            await syncToCloud();
+            playAudioNotification('success');
+            loadEmployees();
+        }
     }
 
     function changeUserRole(username, newRole) {
@@ -1191,7 +1157,7 @@
         }
 
         let emps = JSON.parse(localStorage.getItem('employees')) || [];
-        let emp = emps.find(e => e.id === empId);
+        let emp = emps.find(e => String(e.id) === String(empId));
 
         if (emp) {
             let currentQ = emp.quota;
@@ -1235,7 +1201,7 @@
         }
 
         let leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
-        let idx = leaves.findIndex(l => l.id == leaveId);
+        let idx = leaves.findIndex(l => String(l.id) === String(leaveId));
 
         if (idx !== -1) {
             leaves[idx].status = 'approved';
@@ -1286,7 +1252,7 @@
                 }
 
                 if (currentUser && currentUser.role === 'admin') {
-                    actionBtnsHtml += `<button class="btn btn-info text-white btn-sm me-1" onclick="editEmployeeQuota(${emp.id})">${lang.setQuotaBtn}</button>`;
+                    actionBtnsHtml += `<button class="btn btn-info text-white btn-sm me-1" onclick="editEmployeeQuota('${emp.id}')">${lang.setQuotaBtn}</button>`;
                 }
 
                 const phoneDisplay = formatPhoneNumber(emp.phone);
@@ -1300,7 +1266,7 @@
                         <td style="width: 130px;">${roleHtml}</td>
                         <td>
                             ${actionBtnsHtml}
-                            <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${emp.id})">${lang.deleteBtn}</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${emp.id}')">${lang.deleteBtn}</button>
                         </td>
                     </tr>`;
             });
@@ -1339,7 +1305,7 @@
         const editingId = document.getElementById('editingLeaveId').value;
 
         if (editingId) {
-            let idx = leaves.findIndex(l => l.id == editingId);
+            let idx = leaves.findIndex(l => String(l.id) === String(editingId));
             if (idx !== -1) {
                 leaves[idx].empName = empName;
                 leaves[idx].leaveType = document.getElementById('leaveType').value;
@@ -1374,7 +1340,7 @@
 
     function startEditLeave(id) {
         let leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
-        let leave = leaves.find(l => l.id == id);
+        let leave = leaves.find(l => String(l.id) === String(id));
 
         if (leave) {
             document.getElementById('editingLeaveId').value = leave.id;
@@ -1410,11 +1376,14 @@
         }
     }
 
-    function deleteLeave(id) {
+    // 🟢 แก้ไข: ลบการลาออกจาก LocalStorage และซิงค์ลบออกบน Google Sheet ทันที
+    async function deleteLeave(id) {
         if (confirm('คุณต้องการยกเลิก/ลบรายการลานี้ใช่หรือไม่?')) {
             let leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
-            localStorage.setItem('leaveData', JSON.stringify(leaves.filter(leave => leave.id !== id)));
-            syncToCloud();
+            leaves = leaves.filter(leave => String(leave.id) !== String(id));
+            localStorage.setItem('leaveData', JSON.stringify(leaves));
+            
+            await syncToCloud();
             playAudioNotification('success');
             loadLeaves();
         }
@@ -1456,8 +1425,8 @@
                     
                     let adminActionCell = '';
                     if (currentUser && currentUser.role === 'admin') {
-                        let approveBtnHtml = (leave.status !== 'approved') ? `<button class="btn btn-success btn-sm me-1" onclick="approveLeave(${leave.id})">${lang.approveBtn}</button>` : '';
-                        adminActionCell = `<td class="admin-only">${approveBtnHtml}<button class="btn btn-warning btn-sm me-1" onclick="startEditLeave(${leave.id})">✏️ ${lang.editBtn}</button><button class="btn btn-outline-danger btn-sm" onclick="deleteLeave(${leave.id})">🗑️</button></td>`;
+                        let approveBtnHtml = (leave.status !== 'approved') ? `<button class="btn btn-success btn-sm me-1" onclick="approveLeave('${leave.id}')">${lang.approveBtn}</button>` : '';
+                        adminActionCell = `<td class="admin-only">${approveBtnHtml}<button class="btn btn-warning btn-sm me-1" onclick="startEditLeave('${leave.id}')">✏️ ${lang.editBtn}</button><button class="btn btn-outline-danger btn-sm" onclick="deleteLeave('${leave.id}')">🗑️</button></td>`;
                     }
 
                     upcomingTbody.innerHTML += `
@@ -1525,8 +1494,8 @@
                                 <td>${leave.reason}</td>
                                 <td>${statusBadge}</td>
                                 <td>
-                                    <button class="btn btn-warning btn-sm me-1" onclick="startEditLeave(${leave.id})">✏️ ${lang.editBtn}</button>
-                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteLeave(${leave.id})">${lang.cancelBtn}</button>
+                                    <button class="btn btn-warning btn-sm me-1" onclick="startEditLeave('${leave.id}')">✏️ ${lang.editBtn}</button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteLeave('${leave.id}')">${lang.cancelBtn}</button>
                                 </td>
                             </tr>`;
                     });
@@ -1567,7 +1536,7 @@
                     ? `<span class="badge bg-success px-2 py-1">${lang.approvedStatus}</span>` 
                     : `<span class="badge bg-warning text-dark px-2 py-1">${lang.pendingStatus}</span>`;
 
-                let approveBtnHtml = (leave.status !== 'approved') ? `<button class="btn btn-success btn-sm me-1" onclick="approveLeave(${leave.id})">${lang.approveBtn}</button>` : '';
+                let approveBtnHtml = (leave.status !== 'approved') ? `<button class="btn btn-success btn-sm me-1" onclick="approveLeave('${leave.id}')">${lang.approveBtn}</button>` : '';
 
                 leaveTbody.innerHTML += `
                     <tr>
@@ -1580,8 +1549,8 @@
                         <td>${statusBadge}</td>
                         <td>
                             ${approveBtnHtml}
-                            <button class="btn btn-warning btn-sm me-1" onclick="startEditLeave(${leave.id})">✏️ ${lang.editBtn}</button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteLeave(${leave.id})">${lang.deleteBtn}</button>
+                            <button class="btn btn-warning btn-sm me-1" onclick="startEditLeave('${leave.id}')">✏️ ${lang.editBtn}</button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteLeave('${leave.id}')">${lang.deleteBtn}</button>
                         </td>
                     </tr>`;
             });
