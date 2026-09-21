@@ -28,6 +28,7 @@
 
         .card { border-radius: 15px; border: none; overflow: hidden; }
         .card-header-dashboard { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; }
+        .card-header-sat { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; }
         .card-header-form { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; }
         .card-header-summary { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: white; }
         .card-header-admin { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; }
@@ -121,7 +122,7 @@
 
 <!-- 2. Navbar -->
 <nav id="mainNav" class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm d-none">
-    <div class="container">
+    <div class="container-fluid px-4">
         <a class="navbar-brand fw-bold" href="#" id="navTitle">WH Pantai System</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -193,37 +194,102 @@
     </div>
 </div>
 
-<!-- 3. Main Content -->
-<div id="mainContent" class="container d-none">
+<!-- Modal สำหรับ Admin คีย์วันหยุดเสาร์ -->
+<div class="modal fade" id="satOffModal" tabindex="-1" aria-labelledby="satOffModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header card-header-sat text-white">
+                <h5 class="modal-title fw-bold" id="satModalTitle"><i class="fa-solid fa-calendar-minus me-2"></i>คีย์หยุดวันเสาร์ ( Admin Only )</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="satOffForm">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold" id="lblSatEmpSelect">เลือกพนักงาน</label>
+                        <select class="form-select" id="satEmpSelect" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-semibold" id="lblSatDateSelect">เลือกวันเสาร์ที่หยุด</label>
+                        <input type="text" class="form-control datepicker" id="satDateSelect" placeholder="เลือกวันเสาร์" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fw-semibold" id="lblSatReason">หมายเหตุ / เหตุผล</label>
+                        <input type="text" class="form-control" id="satReason" placeholder="เช่น หยุดเสาร์ตามเวร / ติดภารกิจ" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 btn-lg fs-6 fw-bold text-dark shadow-sm" id="btnSaveSatOff">บันทึกวันหยุดเสาร์</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- 3.1 หน้า Dashboard ลางาน -->
+<!-- 3. Main Content -->
+<div id="mainContent" class="container-fluid px-4 d-none">
+
+    <!-- 3.1 หน้า Dashboard ลางาน (ปรับ Layout เป็น 2 คอลัมน์) -->
     <div id="upcomingView" class="page-section active">
-        <div class="card shadow-sm">
-            <div class="card-header card-header-dashboard p-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0 fw-bold" id="upcomingTitle">Dashboard ลางาน</h4>
-                    <span class="badge bg-white text-dark px-3 py-2 shadow-sm" id="txtCurrentDateInfo"></span>
+        <div class="row g-4">
+            <!-- คอลัมน์ซ้าย: Dashboard ลางานปกติ -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header card-header-dashboard p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0 fw-bold" id="upcomingTitle">Dashboard ลางาน</h4>
+                            <span class="badge bg-white text-dark px-3 py-2 shadow-sm" id="txtCurrentDateInfo"></span>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-3" id="upcomingDesc">* แสดงเฉพาะรายการที่ยังไม่ถึงกำหนดหรือกำลังอยู่ในช่วงลาเท่านั้น</p>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-custom-header">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;" id="thUpImg">รูป</th>
+                                        <th id="thUpName">พนักงาน</th>
+                                        <th id="thUpType">ประเภท</th>
+                                        <th id="thUpStart">เริ่มวันที่</th>
+                                        <th id="thUpEnd">ถึงวันที่</th>
+                                        <th id="thUpDays" class="text-center">จำนวน (วัน)</th>
+                                        <th id="thUpReason" class="admin-only">เหตุผล</th>
+                                        <th id="thUpStatus">สถานะ</th>
+                                        <th id="thUpAction" class="admin-only">จัดการ (Admin)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="upcomingTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-body p-4">
-                <p class="text-muted small mb-3" id="upcomingDesc">* แสดงเฉพาะรายการที่ยังไม่ถึงกำหนดหรือกำลังอยู่ในช่วงลาเท่านั้น</p>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle table-custom-header">
-                        <thead>
-                            <tr>
-                                <th style="width: 60px;" id="thUpImg">รูป</th>
-                                <th id="thUpName">พนักงาน</th>
-                                <th id="thUpType">ประเภท</th>
-                                <th id="thUpStart">เริ่มวันที่</th>
-                                <th id="thUpEnd">ถึงวันที่</th>
-                                <th id="thUpDays" class="text-center">จำนวน (วัน)</th>
-                                <th id="thUpReason" class="admin-only">เหตุผล</th>
-                                <th id="thUpStatus">สถานะ</th>
-                                <th id="thUpAction" class="admin-only">จัดการ (Admin)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="upcomingTableBody"></tbody>
-                    </table>
+
+            <!-- คอลัมน์ขวา: หัวข้อหยุดวันเสาร์ (ใหม่) -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm h-100 border-start border-warning border-4">
+                    <div class="card-header card-header-sat p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0 fw-bold fs-5" id="satDashTitle"><i class="fa-solid fa-calendar-day me-2"></i>หยุดวันเสาร์</h4>
+                            <button class="btn btn-light btn-sm fw-bold admin-only shadow-sm" onclick="openSatOffModal()">
+                                <i class="fa-solid fa-plus text-warning me-1"></i> <span id="btnKeySatText">คีย์หยุดวันเสาร์</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <p class="text-muted small mb-3" id="satDescNotice">* แอดมินเป็นผู้คีย์ข้อมูล / พนักงานดูได้อย่างเดียว</p>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle table-sm">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 40px;">รูป</th>
+                                        <th id="thSatEmp">พนักงาน</th>
+                                        <th id="thSatDate">วันที่หยุดเสาร์</th>
+                                        <th id="thSatReason">เหตุผล</th>
+                                        <th id="thSatAction" class="admin-only text-end">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="satTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -256,6 +322,7 @@
                                 <option value="sick" id="optSick">ลาป่วย</option>
                                 <option value="personal" id="optPersonal">ลากิจ</option>
                                 <option value="vacation" id="optVacation">ลาพักร้อน</option>
+                                <option value="saturday" id="optSaturday">หยุดวันเสาร์</option>
                             </select>
                         </div>
                         <div class="col-md-3 mb-3">
@@ -310,22 +377,28 @@
             </div>
             <div class="card-body p-4">
                 <div class="row mb-4">
-                    <div class="col-md-4 mb-2">
+                    <div class="col-md-3 mb-2">
                         <div class="card stat-card bg-danger p-3 shadow-sm text-center">
                             <h6 id="statMySick" class="opacity-75">ลาป่วย (ใช้ไป/โควต้า)</h6>
                             <h2 class="mb-0 fw-bold"><span id="countMySick">0</span> <small class="fs-6" id="txtDayUnit2">วัน</small></h2>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-2">
+                    <div class="col-md-3 mb-2">
                         <div class="card stat-card bg-warning text-dark p-3 shadow-sm text-center">
                             <h6 id="statMyPersonal" class="opacity-75">ลากิจ (ใช้ไป/โควต้า)</h6>
                             <h2 class="mb-0 fw-bold"><span id="countMyPersonal">0</span> <small class="fs-6" id="txtDayUnit3">วัน</small></h2>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-2">
+                    <div class="col-md-3 mb-2">
                         <div class="card stat-card bg-success p-3 shadow-sm text-center">
                             <h6 id="statMyVacation" class="opacity-75">ลาพักร้อน (ใช้ไป/โควต้า)</h6>
                             <h2 class="mb-0 fw-bold"><span id="countMyVacation">0</span> <small class="fs-6" id="txtDayUnit4">วัน</small></h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <div class="card stat-card bg-secondary p-3 shadow-sm text-center">
+                            <h6 id="statMySatOff" class="opacity-75">หยุดวันเสาร์</h6>
+                            <h2 class="mb-0 fw-bold"><span id="countMySatOff">0</span> <small class="fs-6" id="txtDayUnitSat">วัน</small></h2>
                         </div>
                     </div>
                 </div>
@@ -482,6 +555,7 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBoGBT35V9D3mchobSkVBqvuDT8KxQG9YjzcFaKT2rFguxCsxyH1l5RIRhtAWWDKlwaw/exec";
 
     let profileOffcanvasInstance = null;
+    let satOffModalInstance = null;
 
     function openProfileModal() {
         if (!profileOffcanvasInstance) {
@@ -494,6 +568,28 @@
         if (profileOffcanvasInstance) {
             profileOffcanvasInstance.hide();
         }
+    }
+
+    function openSatOffModal() {
+        if (!currentUser || currentUser.role !== 'admin') {
+            playAudioNotification('error');
+            alert('เฉพาะ Admin เท่านั้นที่สามารถคีย์วันหยุดเสาร์ได้');
+            return;
+        }
+        
+        // โหลดรายชื่อพนักงานเข้า Dropdown
+        const emps = JSON.parse(localStorage.getItem('employees')) || [];
+        const satSelect = document.getElementById('satEmpSelect');
+        satSelect.innerHTML = emps.map(e => `<option value="${e.name}">${e.name} (${e.dept || 'WH'})</option>`).join('');
+
+        if (!satOffModalInstance) {
+            satOffModalInstance = new bootstrap.Modal(document.getElementById('satOffModal'));
+        }
+        satOffModalInstance.show();
+    }
+
+    function closeSatOffModal() {
+        if (satOffModalInstance) satOffModalInstance.hide();
     }
 
     function formatPhoneNumber(phone) {
@@ -553,6 +649,8 @@
             return `<span class="badge bg-warning text-dark px-2 py-1"><i class="fa-solid fa-user-clock me-1"></i>${label}</span>`;
         } else if (type === 'vacation') {
             return `<span class="badge bg-success px-2 py-1"><i class="fa-solid fa-umbrella-beach me-1"></i>${label}</span>`;
+        } else if (type === 'saturday') {
+            return `<span class="badge bg-warning text-dark border border-dark px-2 py-1"><i class="fa-solid fa-calendar-minus me-1"></i>${label}</span>`;
         }
         return `<span class="badge bg-secondary px-2 py-1">${label}</span>`;
     }
@@ -692,9 +790,9 @@
             loginTitle: "เข้าสู่ระบบ", lblUsername: "ชื่อผู้ใช้", lblPassword: "รหัสผ่าน", btnLogin: "เข้าสู่ระบบ", txtNoAccount: "ยังไม่มีบัญชี?", linkGoRegister: "สมัครสมาชิก",
             regTitle: "สมัครสมาชิกพนักงาน", lblRegFullName: "ชื่อ-นามสกุล", lblRegPhone: "เบอร์โทรศัพท์", lblRegDept: "แผนก", lblRegUser: "ชื่อผู้ใช้", lblRegPass: "รหัสผ่าน", btnRegister: "ลงทะเบียน", txtHaveAccount: "มีบัญชีอยู่แล้ว?", linkGoLogin: "เข้าสู่ระบบ", btnLogout: "ออกจากระบบ",
             navTitle: "ระบบลางาน WH Pantai", menuUpcoming: "Dashboard ลางาน", menuRequest: "ฟอร์มขอลางาน", menuMySummary: "สรุปการลาของฉัน", menuDashboard: "แดชบอร์ด & ประวัติ", menuEmployee: "จัดการพนักงาน",
-            formTitle: "แบบฟอร์มขอลางาน - WH Pantai", lblSelectEmp: "ผู้ขอลางาน", lblLeaveType: "ประเภทการลา", optSick: "ลาป่วย", optPersonal: "ลากิจ", optVacation: "ลาพักร้อน",
+            formTitle: "แบบฟอร์มขอลางาน - WH Pantai", lblSelectEmp: "ผู้ขอลางาน", lblLeaveType: "ประเภทการลา", optSick: "ลาป่วย", optPersonal: "ลากิจ", optVacation: "ลาพักร้อน", optSaturday: "หยุดวันเสาร์",
             lblStartDate: "เริ่มวันที่", lblEndDate: "ถึงวันที่", lblLeaveDays: "จำนวนวันลา", lblReason: "เหตุผล", btnSubmit: "บันทึกการลา",
-            mySummaryTitle: "สรุปสถิติการลาของฉัน", statMySick: "ลาป่วย", statMyPersonal: "ลากิจ", statMyVacation: "ลาพักร้อน",
+            mySummaryTitle: "สรุปสถิติการลาของฉัน", statMySick: "ลาป่วย", statMyPersonal: "ลากิจ", statMyVacation: "ลาพักร้อน", statMySatOff: "หยุดวันเสาร์",
             myHistoryTitle: "ประวัติการลาของคุณ", thMyType: "ประเภท", thMyStart: "เริ่มวันที่", thMyEnd: "ถึงวันที่", thMyDays: "จำนวน (วัน)", thMyReason: "เหตุผล", thMyStatus: "สถานะ", thMyActions: "จัดการ",
             profileTitle: "แก้ไขข้อมูลส่วนตัว", lblProfUsername: "ชื่อผู้ใช้", lblProfFullName: "ชื่อ-นามสกุล", lblProfPhone: "เบอร์โทรศัพท์", lblProfDept: "แผนก", btnSaveProfile: "บันทึกการแก้ไข", lblUploadImage: "📷 อัปโหลดรูปโปรไฟล์",
             upcomingTitle: "Dashboard ลางาน", upcomingDesc: "* แสดงเฉพาะรายการที่ยังไม่ถึงกำหนดหรือกำลังอยู่ในช่วงลาเท่านั้น",
@@ -703,15 +801,16 @@
             tableTitle: "ประวัติการลาทั้งหมด", thName: "พนักงาน", thType: "ประเภท", thStart: "เริ่ม", thEnd: "สิ้นสุด", thAmount: "จำนวน", thReason: "เหตุผล", thStatus: "สถานะ", thAction: "จัดการ (Admin)",
             empFormTitle: "เพิ่มพนักงานใหม่", lblEmpName: "ชื่อ-นามสกุล", lblEmpUser: "Username", lblEmpPhone: "เบอร์โทรศัพท์", lblEmpDept: "แผนก", btnAddEmp: "เพิ่มพนักงาน",
             empTableTitle: "รายชื่อพนักงาน", thEmpName: "ชื่อ", thEmpPhone: "เบอร์โทรศัพท์", thEmpDept: "แผนก", thEmpRole: "สิทธิ์ใช้งาน", thEmpAction: "จัดการ", deleteBtn: "ลบ", editBtn: "แก้ไข", cancelBtn: "ยกเลิก", resetPassBtn: "🔑 รีเซ็ต", setQuotaBtn: "⚙️ โควต้า", approveBtn: "✅ ออนุมัติ", pendingStatus: "⏳ รออนุมัติ", approvedStatus: "🟢 อนุมัติแล้ว",
-            txtDayUnit: "วัน", txtCountUnit: "ครั้ง", noLeavesMsg: "ไม่มีรายการวันลาที่กำลังจะถึงในขณะนี้", noHistoryMsg: "ไม่พบประวัติการลาในปีนี้"
+            txtDayUnit: "วัน", txtCountUnit: "ครั้ง", noLeavesMsg: "ไม่มีรายการวันลาที่กำลังจะถึงในขณะนี้", noHistoryMsg: "ไม่พบประวัติการลาในปีนี้",
+            satDashTitle: "หยุดวันเสาร์", btnKeySatText: "คีย์หยุดวันเสาร์", satDescNotice: "* แอดมินเป็นผู้คีย์ข้อมูล / พนักงานดูได้อย่างเดียว", thSatEmp: "พนักงาน", thSatDate: "วันที่หยุด", thSatReason: "เหตุผล", thSatAction: "จัดการ", noSatMsg: "ไม่มีรายการหยุดวันเสาร์"
         },
         en: {
             loginTitle: "Login", lblUsername: "Username", lblPassword: "Password", btnLogin: "Login", txtNoAccount: "Don't have an account?", linkGoRegister: "Register",
             regTitle: "Employee Registration", lblRegFullName: "Full Name", lblRegPhone: "Phone Number", lblRegDept: "Department", lblRegUser: "Username", lblRegPass: "Password", btnRegister: "Sign Up", txtHaveAccount: "Already have an account?", linkGoLogin: "Login", btnLogout: "Logout",
             navTitle: "WH Pantai Leave System", menuUpcoming: "Leave Dashboard", menuRequest: "Leave Form", menuMySummary: "My Summary", menuDashboard: "Dashboard & History", menuEmployee: "Employees",
-            formTitle: "Leave Form - WH Pantai", lblSelectEmp: "Applicant Name", lblLeaveType: "Leave Type", optSick: "Sick Leave", optPersonal: "Personal Leave", optVacation: "Annual Leave",
+            formTitle: "Leave Form - WH Pantai", lblSelectEmp: "Applicant Name", lblLeaveType: "Leave Type", optSick: "Sick Leave", optPersonal: "Personal Leave", optVacation: "Annual Leave", optSaturday: "Saturday Off",
             lblStartDate: "Start Date", lblEndDate: "End Date", lblLeaveDays: "Leave Days", lblReason: "Reason", btnSubmit: "Submit Leave",
-            mySummaryTitle: "My Leave Summary", statMySick: "Sick Leave", statMyPersonal: "Personal Leave", statMyVacation: "Annual Leave",
+            mySummaryTitle: "My Leave Summary", statMySick: "Sick Leave", statMyPersonal: "Personal Leave", statMyVacation: "Annual Leave", statMySatOff: "Saturday Off",
             myHistoryTitle: "Your Leave History", thMyType: "Type", thMyStart: "Start Date", thMyEnd: "End Date", thMyDays: "Days", thMyReason: "Reason", thMyStatus: "Status", thMyActions: "Action",
             profileTitle: "Edit Profile", lblProfUsername: "Username", lblProfFullName: "Full Name", lblProfPhone: "Phone Number", lblProfDept: "Department", btnSaveProfile: "Save Changes", lblUploadImage: "📷 Upload Photo",
             upcomingTitle: "Leave Dashboard", upcomingDesc: "* Shows active/future leave requests only",
@@ -720,15 +819,16 @@
             tableTitle: "All Leave History", thName: "Employee", thType: "Type", thStart: "Start", thEnd: "End", thAmount: "Amount", thReason: "Reason", thStatus: "Status", thAction: "Action (Admin)",
             empFormTitle: "Add New Employee", lblEmpName: "Full Name", lblEmpUser: "Username", lblEmpPhone: "Phone Number", lblEmpDept: "Department", btnAddEmp: "Add Employee",
             empTableTitle: "Employee Directory", thEmpName: "Name", thEmpPhone: "Phone", thEmpDept: "Department", thEmpRole: "Role", thEmpAction: "Action", deleteBtn: "Delete", editBtn: "Edit", cancelBtn: "Cancel", resetPassBtn: "🔑 Reset", setQuotaBtn: "⚙️ Quotas", approveBtn: "✅ Approve", pendingStatus: "⏳ Pending", approvedStatus: "🟢 Approved",
-            txtDayUnit: "Days", txtCountUnit: "Times", noLeavesMsg: "No upcoming leave requests found.", noHistoryMsg: "No leave history found for this year."
+            txtDayUnit: "Days", txtCountUnit: "Times", noLeavesMsg: "No upcoming leave requests found.", noHistoryMsg: "No leave history found for this year.",
+            satDashTitle: "Saturday Off", btnKeySatText: "Key Sat-Off", satDescNotice: "* Admin entry only / Users view only", thSatEmp: "Employee", thSatDate: "Off Date", thSatReason: "Reason", thSatAction: "Action", noSatMsg: "No Saturday off records found."
         },
         mm: {
             loginTitle: "အကောင့်ဝင်ရန်", lblUsername: "အသုံးပြုသူအမည်", lblPassword: "စကားဝှက်", btnLogin: "ဝင်ရောက်မည်", txtNoAccount: "အကောင့်မရှိသေးပါလား?", linkGoRegister: "အကောင့်ဖွင့်ရန်",
             regTitle: "ဝန်ထမ်းအကောင့်ဖွင့်ရန်", lblRegFullName: "အမည်အပြည့်အစုံ", lblRegPhone: "ဖုန်းနံပါတ်", lblRegDept: "ဌာန", lblRegUser: "အသုံးပြုသူအမည်", lblRegPass: "စကားဝှက်", btnRegister: "စာရင်းသွင်းမည်", txtHaveAccount: "အကောင့်ရှိပြီးသားလား?", linkGoLogin: "အကောင့်ဝင်ရန်", btnLogout: "ထွက်မည်",
             navTitle: "WH Pantai ခွင့်ယူစနစ်", menuUpcoming: "ခွင့်ယူမှု ဒက်ရှ်ဘုတ်", menuRequest: "ခွင့်တိုင်ကြားလွှာ", menuMySummary: "ကျွန်ုပ်၏ ခွင့်အကျဉ်း", menuDashboard: "ဒက်ရှ်ဘုတ်နှင့် မှတ်တမ်း", menuEmployee: "ဝန်ထမ်းများ စီမံရန်",
-            formTitle: "ခွင့်တိုင်ကြားလွှာ - WH Pantai", lblSelectEmp: "ခွင့်တိုင်ကြားသူ", lblLeaveType: "ခွင့်အမျိုးအစား", optSick: "ဆေးခွင့်", optPersonal: "ရှောင်တခင်ခွင့်", optVacation: "လုပ်သက်ခွင့်",
+            formTitle: "ခွင့်တိုင်ကြားလွှာ - WH Pantai", lblSelectEmp: "ခွင့်တိုင်ကြားသူ", lblLeaveType: "ခွင့်အမျိုးအစား", optSick: "ဆေးခွင့်", optPersonal: "ရှောင်တခင်ခွင့်", optVacation: "လုပ်သက်ခွင့်", optSaturday: "စနေနေ့ ပိတ်ရက်",
             lblStartDate: "စတင်သည့်ရက်", lblEndDate: "ပြီးဆုံးသည့်ရက်", lblLeaveDays: "ခွင့်ရက်ပေါင်း", lblReason: "အကြောင်းပြချက်", btnSubmit: "ခွင့်တိုင်ကြားမည်",
-            mySummaryTitle: "ကျွန်ုပ်၏ ခွင့်ယူမှု အကျဉ်းချုပ်", statMySick: "ဆေးခွင့်", statMyPersonal: "ရှောင်တခင်ခွင့်", statMyVacation: "လုပ်သက်ခွင့်",
+            mySummaryTitle: "ကျွန်ုပ်၏ ခွင့်ယူမှု အကျဉ်းချုပ်", statMySick: "ဆေးခွင့်", statMyPersonal: "ရှောင်တခင်ခွင့်", statMyVacation: "လုပ်သက်ခွင့်", statMySatOff: "စနေနေ့ ပိတ်ရက်",
             myHistoryTitle: "သင်၏ ခွင့်ယူမှု မှတ်တမ်း", thMyType: "အမျိုးအစား", thMyStart: "စတင်ရက်", thMyEnd: "ပြီးဆုံးရက်", thMyDays: "ရက်ပေါင်း", thMyReason: "အကြောင်းပြချက်", thMyStatus: "အခြေအနေ", thMyActions: "လုပ်ဆောင်ချက်",
             profileTitle: "ကိုယ်ရေးအချက်အလက် ပြင်ရန်", lblProfUsername: "အသုံးပြုသူအမည်", lblProfFullName: "အမည်အပြည့်အစုံ", lblProfPhone: "ဖုန်းနံပါတ်", lblProfDept: "ဌာန", btnSaveProfile: "သိမ်းဆည်းမည်", lblUploadImage: "📷 ဓာတ်ပုံတင်မည်",
             upcomingTitle: "ခွင့်ယူမှု ဒက်ရှ်ဘုတ်", upcomingDesc: "* လာမည့် သို့မဟုတ် လက်ရှိ ခွင့်ယူထားသည်များကိုသာ ပြသထားသည်",
@@ -737,7 +837,8 @@
             tableTitle: "ခွင့်ယူမှု မှတ်တမ်းအားလုံး", thName: "ဝန်ထမ်း", thType: "အမျိုးအစား", thStart: "စတင်ရက်", thEnd: "ပြီးဆုံးရက်", thAmount: "အရေအတွက်", thReason: "အကြောင်းပြချက်", thStatus: "အခြေအနေ", thAction: "လုပ်ဆောင်ချက် (Admin)",
             empFormTitle: "ဝန်ထမ်းသစ်ထည့်ရန်", lblEmpName: "အမည်အပြည့်အစုံ", lblEmpUser: "Username", lblEmpPhone: "ဖုန်းနံပါတ်", lblEmpDept: "ဌာန", btnAddEmp: "ဝန်ထမ်းထည့်မည်",
             empTableTitle: "ဝန်ထမ်းစာရင်း", thEmpName: "အမည်", thEmpPhone: "ဖုန်းနံပါတ်", thEmpDept: "ဌာန", thEmpRole: "ရာထူး/စနစ်", thEmpAction: "လုပ်ဆောင်ချက်", deleteBtn: "ဖျက်မည်", editBtn: "ပြင်မည်", cancelBtn: "ပယ်ဖျက်မည်", resetPassBtn: "🔑 စကားဝှက်ပြင်မည်", setQuotaBtn: "⚙️ ခွင့်โတွတာ", approveBtn: "✅ အတည်ပြုမည်", pendingStatus: "⏳ စောင့်ဆိုင်းဆဲ", approvedStatus: "🟢 ခွင့်ပြုပြီး",
-            txtDayUnit: "ရက်", txtCountUnit: "ကြိမ်", noLeavesMsg: "လာမည့် ခွင့်ယူမှုများ မရှိသေးပါ", noHistoryMsg: "ဒီနှစ်အတွက် ခွင့်ယူမှု မှတ်တမ်း မရှိသေးပါ"
+            txtDayUnit: "ရက်", txtCountUnit: "ကြိမ်", noLeavesMsg: "လာမည့် ခွင့်ယူမှုများ မရှိသေးပါ", noHistoryMsg: "ဒီနှစ်အတွက် ခွင့်ယူမှု မှတ်တမ်း မရှိသေးပါ",
+            satDashTitle: "စနေနေ့ ပိတ်ရက်", btnKeySatText: "စနေနေ့ ပိတ်ရက်ထည့်ရန်", satDescNotice: "* Admin သာလျှင် ထည့်သွင်းနိုင်သည်", thSatEmp: "ဝန်ထမ်း", thSatDate: "ပိတ်ရက်", thSatReason: "အကြောင်းပြချက်", thSatAction: "စီမံရန်", noSatMsg: "စနေနေ့ ပိတ်ရက် မရှိသေးပါ"
         }
     };
 
@@ -754,6 +855,10 @@
         dateFormat: "d/m/Y", 
         allowInput: true,
         onChange: function() { autoCalculateLeaveDays(); }
+    });
+    let satDatePicker = flatpickr("#satDateSelect", {
+        dateFormat: "d/m/Y",
+        allowInput: true
     });
 
     function calculateDays(startDateStr, endDateStr) {
@@ -1018,6 +1123,43 @@
         
         closeProfileModal();
         loadEmployees();
+        loadLeaves();
+    });
+
+    // คีย์ข้อมูลหยุดวันเสาร์ (Admin Only)
+    document.getElementById('satOffForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!currentUser || currentUser.role !== 'admin') return;
+
+        const targetEmp = document.getElementById('satEmpSelect').value;
+        const satDateRaw = document.getElementById('satDateSelect').value;
+        const satReason = document.getElementById('satReason').value.trim();
+
+        if (!satDateRaw) {
+            alert('กรุณาเลือกวันที่หยุดเสาร์');
+            return;
+        }
+
+        let leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
+        leaves.push({
+            id: Date.now(),
+            empName: targetEmp,
+            leaveType: 'saturday',
+            startDate: parseDateToISO(satDateRaw),
+            endDate: parseDateToISO(satDateRaw),
+            customDays: 1,
+            reason: satReason || 'หยุดวันเสาร์',
+            status: 'approved' // อนุมัติทันทีเพราะ admin เป็นคนคีย์
+        });
+
+        localStorage.setItem('leaveData', JSON.stringify(leaves));
+        syncToCloud();
+        playAudioNotification('success');
+        alert(`คีย์วันหยุดเสาร์ให้ ${targetEmp} เรียบร้อยแล้ว!`);
+
+        this.reset();
+        satDatePicker.clear();
+        closeSatOffModal();
         loadLeaves();
     });
 
@@ -1382,11 +1524,14 @@
         const dateDisplayEl = document.getElementById('txtCurrentDateInfo');
         if (dateDisplayEl) dateDisplayEl.innerText = `วันนี้: ${formatDateDisplay(todayStr)}`;
 
-        // 1. Dashboard ลางาน
+        // 1. Dashboard ลางานปกติ & การ์ดหยุดวันเสาร์
         const upcomingTbody = document.getElementById('upcomingTableBody');
+        const satTbody = document.getElementById('satTableBody');
+
         if(upcomingTbody) {
             upcomingTbody.innerHTML = '';
-            const activeLeaves = leaves.filter(leave => parseDateToISO(leave.endDate) >= todayStr);
+            // กรองลาปกติ
+            const activeLeaves = leaves.filter(leave => leave.leaveType !== 'saturday' && parseDateToISO(leave.endDate) >= todayStr);
 
             if(activeLeaves.length === 0) {
                 const colspanVal = (currentUser && currentUser.role === 'admin') ? 9 : 7;
@@ -1428,6 +1573,36 @@
             }
         }
 
+        // ตารางหยุดวันเสาร์ (ข้างๆ)
+        if (satTbody) {
+            satTbody.innerHTML = '';
+            const satLeaves = leaves.filter(leave => leave.leaveType === 'saturday');
+
+            if (satLeaves.length === 0) {
+                const satColspan = (currentUser && currentUser.role === 'admin') ? 5 : 4;
+                satTbody.innerHTML = `<tr><td colspan="${satColspan}" class="text-center text-muted p-3">${lang.noSatMsg}</td></tr>`;
+            } else {
+                satLeaves.forEach(leave => {
+                    const empUser = users.find(u => String(u.fullName || '').trim() === String(leave.empName || '').trim());
+                    const empAvatar = (empUser && empUser.avatar) ? empUser.avatar : defaultAvatar;
+
+                    let adminSatAction = '';
+                    if (currentUser && currentUser.role === 'admin') {
+                        adminSatAction = `<td class="admin-only text-end"><button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteLeave(${leave.id})">🗑️</button></td>`;
+                    }
+
+                    satTbody.innerHTML += `
+                        <tr>
+                            <td><img src="${empAvatar}" alt="${leave.empName}" class="table-avatar shadow-sm" style="width:28px;height:28px;"></td>
+                            <td class="fw-bold small">${leave.empName}</td>
+                            <td class="text-warning fw-bold small">${formatDateDisplay(leave.startDate)}</td>
+                            <td class="small text-muted">${leave.reason || '-'}</td>
+                            ${adminSatAction}
+                        </tr>`;
+                });
+            }
+        }
+
         // 2. สรุปข้อมูลสำหรับ User
         if (currentUser) {
             const selectedUserYear = document.getElementById('userYearSelect').value;
@@ -1448,7 +1623,7 @@
             });
 
             const myHistoryTbody = document.getElementById('myHistoryTableBody');
-            let mySickDays = 0, myPersonalDays = 0, myVacationDays = 0;
+            let mySickDays = 0, myPersonalDays = 0, myVacationDays = 0, mySatDays = 0;
 
             if (myHistoryTbody) {
                 myHistoryTbody.innerHTML = '';
@@ -1461,8 +1636,9 @@
                         if (leave.leaveType === 'sick') mySickDays += days;
                         if (leave.leaveType === 'personal') myPersonalDays += days;
                         if (leave.leaveType === 'vacation') myVacationDays += days;
+                        if (leave.leaveType === 'saturday') mySatDays += days;
 
-                        let typeLabel = leave.leaveType === 'sick' ? lang.optSick : (leave.leaveType === 'vacation' ? lang.optVacation : lang.optPersonal);
+                        let typeLabel = leave.leaveType === 'sick' ? lang.optSick : (leave.leaveType === 'vacation' ? lang.optVacation : (leave.leaveType === 'saturday' ? lang.optSaturday : lang.optPersonal));
                         let typeBadge = getLeaveTypeBadge(leave.leaveType, typeLabel);
                         let statusBadge = (leave.status === 'approved') 
                             ? `<span class="badge bg-success px-2 py-1">${lang.approvedStatus}</span>` 
@@ -1488,6 +1664,7 @@
             document.getElementById('countMySick').innerText = `${mySickDays} / ${userQuota.sick}`;
             document.getElementById('countMyPersonal').innerText = `${myPersonalDays} / ${userQuota.personal}`;
             document.getElementById('countMyVacation').innerText = `${myVacationDays} / ${userQuota.vacation}`;
+            if(document.getElementById('countMySatOff')) document.getElementById('countMySatOff').innerText = `${mySatDays}`;
         }
 
         // 3. แดชบอร์ดภาพรวมสำหรับ Admin
@@ -1513,7 +1690,7 @@
                 if(leave.leaveType === 'personal') personalCountDays += days;
                 if(leave.leaveType === 'vacation') vacCountDays += days;
 
-                let typeLabel = leave.leaveType === 'sick' ? lang.optSick : (leave.leaveType === 'vacation' ? lang.optVacation : lang.optPersonal);
+                let typeLabel = leave.leaveType === 'sick' ? lang.optSick : (leave.leaveType === 'vacation' ? lang.optVacation : (leave.leaveType === 'saturday' ? lang.optSaturday : lang.optPersonal));
                 let typeBadge = getLeaveTypeBadge(leave.leaveType, typeLabel);
                 let statusBadge = (leave.status === 'approved') 
                     ? `<span class="badge bg-success px-2 py-1">${lang.approvedStatus}</span>` 
