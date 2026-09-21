@@ -23,6 +23,7 @@
         .profile-avatar-preview { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #6366f1; margin: 0 auto 10px auto; display: block; }
         .form-user-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #3b82f6; margin: 0 auto 10px auto; display: block; }
         
+        /* รูปโปรไฟล์ที่หัวการ์ด */
         .profile-header-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 3px solid #7c3aed; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
         .card { border-radius: 15px; border: none; overflow: hidden; }
@@ -40,8 +41,9 @@
         .btn-lang:hover { background: rgba(255, 255, 255, 0.3); color: white; }
         
         .sync-spinner { display: none; width: 1rem; height: 1rem; border-width: 0.15em; }
+
+        /* ปรับสไตล์ Offcanvas โปรไฟล์ด้านขวา */
         .offcanvas-profile { max-width: 360px; border-top-left-radius: 15px; border-bottom-left-radius: 15px; }
-        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -61,18 +63,11 @@
             <form id="loginForm">
                 <div class="mb-3">
                     <label class="form-label text-secondary fw-semibold" id="lblUsername">ชื่อผู้ใช้ / Username</label>
-                    <input type="text" class="form-control form-control-lg fs-6" id="loginUsername" required placeholder="กรอกชื่อผู้ใช้">
+                    <input type="text" class="form-control form-control-lg fs-6" id="loginUsername" required>
                 </div>
-                <div class="mb-3">
+                <div class="mb-4">
                     <label class="form-label text-secondary fw-semibold" id="lblPassword">รหัสผ่าน / Password</label>
-                    <div class="input-group">
-                        <input type="password" class="form-control form-control-lg fs-6" id="loginPassword" required placeholder="กรอกรหัสผ่าน">
-                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('loginPassword', this)"><i class="fa-solid fa-eye"></i></button>
-                    </div>
-                </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="rememberMe">
-                    <label class="form-check-label text-secondary small" for="rememberMe">จดจำการเข้าสู่ระบบในเครื่องนี้</label>
+                    <input type="password" class="form-control form-control-lg fs-6" id="loginPassword" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 btn-lg fs-6 shadow-sm mb-3" id="btnLogin">เข้าสู่ระบบ</button>
                 <div class="text-center">
@@ -112,10 +107,7 @@
                 </div>
                 <div class="mb-4">
                     <label class="form-label text-secondary fw-semibold" id="lblRegPass">รหัสผ่าน / Password</label>
-                    <div class="input-group">
-                        <input type="password" class="form-control" id="regPassword" required>
-                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('regPassword', this)"><i class="fa-solid fa-eye"></i></button>
-                    </div>
+                    <input type="password" class="form-control" id="regPassword" required>
                 </div>
                 <button type="submit" class="btn btn-success w-100 btn-lg fs-6 shadow-sm mb-3" id="btnRegister">ลงทะเบียนพนักงาน</button>
                 <div class="text-center">
@@ -165,7 +157,7 @@
     </div>
 </nav>
 
-<!-- Pop-up แก้ไขโปรไฟล์ -->
+<!-- Pop-up แก้ไขโปรไฟล์ (Offcanvas ขวามือ) -->
 <div class="offcanvas offcanvas-end offcanvas-profile" tabindex="-1" id="profileOffcanvas" aria-labelledby="profileOffcanvasLabel">
     <div class="offcanvas-header card-header-profile text-white">
         <h5 class="offcanvas-title fw-bold" id="profileTitle"><i class="fa-solid fa-user-gear me-2"></i>แก้ไขข้อมูลส่วนตัว</h5>
@@ -225,7 +217,7 @@
                                 <th id="thUpStart">เริ่มวันที่</th>
                                 <th id="thUpEnd">ถึงวันที่</th>
                                 <th id="thUpDays" class="text-center">จำนวน (วัน)</th>
-                                <th id="thUpReason">เหตุผล</th>
+                                <th id="thUpReason" class="admin-only">เหตุผล</th>
                                 <th id="thUpStatus">สถานะ</th>
                                 <th id="thUpAction" class="admin-only">จัดการ (Admin)</th>
                             </tr>
@@ -308,7 +300,8 @@
                                 <option value="2024">2024</option>
                             </select>
                         </div>
-                        <div class="d-flex align-items-center gap-2 bg-white text-dark px-3 py-1 rounded-pill shadow-sm">
+                        <!-- แถบแสดงรูปใหญ่ขึ้นพร้อมชื่อผู้ใช้ -->
+                        <div class="d-flex align-items-center gap-2 bg-white text-dark px-3 py-1-5 rounded-pill shadow-sm">
                             <img id="mySummaryUserAvatar" src="" alt="Avatar" class="profile-header-avatar">
                             <span class="fs-5 fw-bold text-purple px-1" id="mySummaryUserDisplay"></span>
                         </div>
@@ -486,8 +479,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-    // ⚠️ อย่าลืมใส่ Web App URL จาก Google Apps Script ตรงนี้เพื่อซิงค์ข้อมูลข้าม PC
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBoGBT35V9D3mchobSkVBqvuDT8KxQG9YjzcFaKT2rFguxCsxyH1l5RIRhtAWWDKlwaw/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNJ8a_S1KYkYeRvIL1vhqiD-LpxYqOW_FWqafV-LF8MXd7m-0DNW34-bVLHTMOm9iF/exec";
 
     let profileOffcanvasInstance = null;
 
@@ -501,17 +493,6 @@
     function closeProfileModal() {
         if (profileOffcanvasInstance) {
             profileOffcanvasInstance.hide();
-        }
-    }
-
-    function togglePasswordVisibility(inputId, btn) {
-        const input = document.getElementById(inputId);
-        if (input.type === "password") {
-            input.type = "text";
-            btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-        } else {
-            input.type = "password";
-            btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
         }
     }
 
@@ -581,10 +562,119 @@
         if (spinner) spinner.style.display = show ? 'inline-block' : 'none';
     }
 
+    // ==========================================
+    // 1. ฟังก์ชันดึงข้อมูลจาก Cloud ลงมาผสาน (Fetch & Merge)
+    // ==========================================
+    async function fetchCloudData() {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return;
+        showSyncSpinner(true);
+        try {
+            const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInitialData`);
+            const data = await res.json();
+
+            if (data) {
+                // --- ผสานข้อมูลการลา (Leaves) ---
+                if (data.leaves && Array.isArray(data.leaves)) {
+                    let localLeaves = JSON.parse(localStorage.getItem('leaveData')) || [];
+                    
+                    data.leaves.forEach(serverItem => {
+                        serverItem.startDate = parseDateToISO(serverItem.startDate);
+                        serverItem.endDate = parseDateToISO(serverItem.endDate);
+                        if (serverItem.customDays !== undefined && serverItem.customDays !== null && serverItem.customDays !== '') {
+                            serverItem.customDays = parseFloat(serverItem.customDays);
+                        }
+                        
+                        let idx = localLeaves.findIndex(l => String(l.id) === String(serverItem.id));
+                        if (idx !== -1) {
+                            localLeaves[idx] = serverItem;
+                        } else {
+                            localLeaves.push(serverItem);
+                        }
+                    });
+                    
+                    localStorage.setItem('leaveData', JSON.stringify(localLeaves));
+                }
+
+                // --- ผสานข้อมูลผู้ใช้งาน (Users) ---
+                if (data.users && Array.isArray(data.users)) {
+                    let localUsers = JSON.parse(localStorage.getItem('users')) || [];
+                    
+                    data.users.forEach(serverUser => {
+                        let uName = String(serverUser.username || '').trim().toLowerCase();
+                        let idx = localUsers.findIndex(u => String(u.username || '').trim().toLowerCase() === uName);
+                        
+                        let formattedUser = {
+                            ...serverUser,
+                            username: String(serverUser.username || '').trim(),
+                            password: String(serverUser.password || '').trim(),
+                            fullName: String(serverUser.fullName || '').trim(),
+                            phone: formatPhoneNumber(serverUser.phone),
+                            dept: String(serverUser.dept || '').trim(),
+                            role: String(serverUser.role || 'user').trim().toLowerCase(),
+                            avatar: serverUser.avatar || defaultAvatar
+                        };
+
+                        if (idx !== -1) {
+                            localUsers[idx] = formattedUser;
+                        } else {
+                            localUsers.push(formattedUser);
+                        }
+                    });
+                    
+                    localStorage.setItem('users', JSON.stringify(localUsers));
+                }
+
+                // --- ผสานข้อมูลพนักงาน (Employees) ---
+                if (data.employees && Array.isArray(data.employees)) {
+                    let localEmps = JSON.parse(localStorage.getItem('employees')) || [];
+                    
+                    data.employees.forEach(serverEmp => {
+                        let idx = localEmps.findIndex(e => String(e.id) === String(serverEmp.id) || e.name === serverEmp.name);
+                        
+                        if (typeof serverEmp.quota === 'string' && serverEmp.quota.trim() !== '') {
+                            try { serverEmp.quota = JSON.parse(serverEmp.quota); } catch(err){ serverEmp.quota = null; }
+                        }
+                        if (!serverEmp.quota || typeof serverEmp.quota !== 'object') {
+                            serverEmp.quota = { sick: 30, personal: 6, vacation: 7 };
+                        } else {
+                            serverEmp.quota = {
+                                sick: parseInt(serverEmp.quota.sick) || 0,
+                                personal: parseInt(serverEmp.quota.personal) || 0,
+                                vacation: parseInt(serverEmp.quota.vacation) || 0
+                            };
+                        }
+                        serverEmp.phone = formatPhoneNumber(serverEmp.phone);
+
+                        if (idx !== -1) {
+                            localEmps[idx] = serverEmp;
+                        } else {
+                            localEmps.push(serverEmp);
+                        }
+                    });
+                    
+                    localStorage.setItem('employees', JSON.stringify(localEmps));
+                }
+
+                loadEmployees();
+                loadLeaves();
+            }
+        } catch (e) {
+            console.error("Fetch Cloud Error:", e);
+        } finally {
+            showSyncSpinner(false);
+        }
+    }
+
+    // ==========================================
+    // 2. ฟังก์ชันส่งข้อมูลขึ้น Cloud (Sync to Cloud)
+    // ==========================================
     async function syncToCloud() {
         if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return;
         showSyncSpinner(true);
         try {
+            // ดึงข้อมูลล่าสุดจาก Cloud เพื่อเอามา Merge เข้า Local ก่อนส่งบันทึกทับ
+            await fetchCloudData();
+
             const leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
             const employees = JSON.parse(localStorage.getItem('employees')) || [];
             const users = JSON.parse(localStorage.getItem('users')) || [];
@@ -596,67 +686,6 @@
             });
         } catch (e) {
             console.error("Cloud Sync Error:", e);
-        } finally {
-            showSyncSpinner(false);
-        }
-    }
-
-    async function fetchCloudData() {
-        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return;
-        showSyncSpinner(true);
-        try {
-            const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInitialData`);
-            const data = await res.json();
-
-            if (data) {
-                if (data.leaves) {
-                    const parsedLeaves = data.leaves.map(l => {
-                        l.startDate = parseDateToISO(l.startDate);
-                        l.endDate = parseDateToISO(l.endDate);
-                        if (l.customDays !== undefined && l.customDays !== null && l.customDays !== '') {
-                            l.customDays = parseFloat(l.customDays);
-                        }
-                        return l;
-                    });
-                    localStorage.setItem('leaveData', JSON.stringify(parsedLeaves));
-                }
-                if (data.users) {
-                    const parsedUsers = data.users.map(u => ({
-                        ...u,
-                        username: String(u.username !== undefined && u.username !== null ? u.username : '').trim(),
-                        password: String(u.password !== undefined && u.password !== null ? u.password : '').trim(),
-                        fullName: String(u.fullName || '').trim(),
-                        phone: formatPhoneNumber(u.phone),
-                        dept: String(u.dept || '').trim(),
-                        role: String(u.role || 'user').trim().toLowerCase(),
-                        avatar: u.avatar || defaultAvatar
-                    }));
-                    localStorage.setItem('users', JSON.stringify(parsedUsers));
-                }
-                if (data.employees) {
-                    const parsedEmps = data.employees.map(e => {
-                        if (typeof e.quota === 'string' && e.quota.trim() !== '') {
-                            try { e.quota = JSON.parse(e.quota); } catch(err){ e.quota = null; }
-                        }
-                        if (!e.quota || typeof e.quota !== 'object') {
-                            e.quota = { sick: 30, personal: 6, vacation: 7 };
-                        } else {
-                            e.quota = {
-                                sick: parseInt(e.quota.sick) || 0,
-                                personal: parseInt(e.quota.personal) || 0,
-                                vacation: parseInt(e.quota.vacation) || 0
-                            };
-                        }
-                        e.phone = formatPhoneNumber(e.phone);
-                        return e;
-                    });
-                    localStorage.setItem('employees', JSON.stringify(parsedEmps));
-                }
-                loadEmployees();
-                loadLeaves();
-            }
-        } catch (e) {
-            console.error("Fetch Cloud Error:", e);
         } finally {
             showSyncSpinner(false);
         }
@@ -751,7 +780,7 @@
             myHistoryTitle: "သင်၏ ခွင့်ယူမှု မှတ်တမ်း", thMyType: "အမျိုးအစား", thMyStart: "စတင်ရက်", thMyEnd: "ပြီးဆုံးရက်", thMyDays: "ရက်ပေါင်း", thMyReason: "အကြောင်းပြချက်", thMyStatus: "အခြေအနေ", thMyActions: "လုပ်ဆောင်ချက်",
             profileTitle: "ကိုယ်ရေးအချက်အလက် ပြင်ရန်", lblProfUsername: "အသုံးပြုသူအမည်", lblProfFullName: "အမည်အပြည့်အစုံ", lblProfPhone: "ဖုန်းနံပါတ်", lblProfDept: "ဌာန", btnSaveProfile: "သိမ်းဆည်းမည်", lblUploadImage: "📷 ဓာတ်ပုံတင်မည်",
             upcomingTitle: "ခွင့်ယူမှု ဒက်ရှ်ဘုတ်", upcomingDesc: "* လာမည့် သို့မဟုတ် လက်ရှိ ခွင့်ယူထားသည်များကိုသာ ပြသထားသည်",
-            thUpImg: "ပုံ", thUpName: "ဝန်ထမ်း", thUpType: "အမျိုးအစား", thUpStart: "စတင်ရက်", thUpEnd: "ပြီးဆုံးရက်", thUpDays: "ရက်ပေါင်း", thUpReason: "အကြောင်းပြချက်", thUpStatus: "အခြေအနေ", thAction: "လုပ်ဆောင်ချက် (Admin)",
+            thUpImg: "ပုံ", thUpName: "ဝန်ထမ်း", thUpType: "အမျိုးအစား", thUpStart: "စတင်ရက်", thUpEnd: "ပြီးဆုံးရက်", thUpDays: "ရက်ပေါင်း", thUpReason: "အကြောင်းပြချက်", thUpStatus: "အခြေအနေ", thUpAction: "လုပ်ဆောင်ချက် (Admin)",
             dashTitle: "WH Pantai အထွေထွေ ဒက်ရှ်ဘုတ်", statTotalLeaves: "စုစုပေါင်း ခွင့်ယူမှု", statSickLeaves: "စုစုပေါင်း ဆေးခွင့်", statVacation: "စုစုပေါင်း လုပ်သက်ခွင့်",
             tableTitle: "ခွင့်ယူမှု မှတ်တမ်းအားလုံး", thName: "ဝန်ထမ်း", thType: "အမျိုးအစား", thStart: "စတင်ရက်", thEnd: "ပြီးဆုံးရက်", thAmount: "အရေအတွက်", thReason: "အကြောင်းပြချက်", thStatus: "အခြေအနေ", thAction: "လုပ်ဆောင်ချက် (Admin)",
             empFormTitle: "ဝန်ထမ်းသစ်ထည့်ရန်", lblEmpName: "အမည်အပြည့်အစုံ", lblEmpUser: "Username", lblEmpPhone: "ဖုန်းနံပါတ်", lblEmpDept: "ဌာန", btnAddEmp: "ဝန်ထမ်းထည့်မည်",
@@ -888,7 +917,6 @@
         e.preventDefault();
         const u = document.getElementById('loginUsername').value.trim();
         const p = document.getElementById('loginPassword').value.trim();
-        const remember = document.getElementById('rememberMe').checked;
 
         let users = JSON.parse(localStorage.getItem('users')) || [];
 
@@ -915,11 +943,6 @@
 
         if (foundUser) {
             currentUser = foundUser;
-            if (remember) {
-                localStorage.setItem('savedUser', JSON.stringify(foundUser));
-            } else {
-                localStorage.removeItem('savedUser');
-            }
             playAudioNotification('success');
             applyRolePermissions();
         } else {
@@ -1049,7 +1072,6 @@
     function logout() {
         currentUser = null;
         tempAvatarBase64 = null;
-        localStorage.removeItem('savedUser');
         cancelEditMode();
         closeProfileModal();
         document.getElementById('loginForm').reset();
@@ -1408,17 +1430,15 @@
         const dateDisplayEl = document.getElementById('txtCurrentDateInfo');
         if (dateDisplayEl) dateDisplayEl.innerText = `วันนี้: ${formatDateDisplay(todayStr)}`;
 
-        // 1. Dashboard ลางาน (แก้ไขจุด Bug จำนวน Colspan และโครงสร้าง Table Row)
+        // 1. Dashboard ลางาน
         const upcomingTbody = document.getElementById('upcomingTableBody');
         if(upcomingTbody) {
             upcomingTbody.innerHTML = '';
             const activeLeaves = leaves.filter(leave => parseDateToISO(leave.endDate) >= todayStr);
 
-            const isAdmin = currentUser && currentUser.role === 'admin';
-            const colCount = isAdmin ? 9 : 8;
-
             if(activeLeaves.length === 0) {
-                upcomingTbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted p-4">${lang.noLeavesMsg}</td></tr>`;
+                const colspanVal = (currentUser && currentUser.role === 'admin') ? 9 : 7;
+                upcomingTbody.innerHTML = `<tr><td colspan="${colspanVal}" class="text-center text-muted p-4">${lang.noLeavesMsg}</td></tr>`;
             } else {
                 activeLeaves.forEach(leave => {
                     const days = getLeaveDaysVal(leave);
@@ -1432,8 +1452,10 @@
                     const empUser = users.find(u => String(u.fullName || '').trim() === String(leave.empName || '').trim());
                     const empAvatar = (empUser && empUser.avatar) ? empUser.avatar : defaultAvatar;
 
+                    const reasonCell = (currentUser && currentUser.role === 'admin') ? `<td class="admin-only">${leave.reason}</td>` : '';
+                    
                     let adminActionCell = '';
-                    if (isAdmin) {
+                    if (currentUser && currentUser.role === 'admin') {
                         let approveBtnHtml = (leave.status !== 'approved') ? `<button class="btn btn-success btn-sm me-1" onclick="approveLeave(${leave.id})">${lang.approveBtn}</button>` : '';
                         adminActionCell = `<td class="admin-only">${approveBtnHtml}<button class="btn btn-warning btn-sm me-1" onclick="startEditLeave(${leave.id})">✏️ ${lang.editBtn}</button><button class="btn btn-outline-danger btn-sm" onclick="deleteLeave(${leave.id})">🗑️</button></td>`;
                     }
@@ -1446,7 +1468,7 @@
                             <td>${formatDateDisplay(leave.startDate)}</td>
                             <td>${formatDateDisplay(leave.endDate)}</td>
                             <td class="fw-bold text-primary text-center">${days} ${lang.txtDayUnit}</td>
-                            <td>${leave.reason || '-'}</td>
+                            ${reasonCell}
                             <td>${statusBadge}</td>
                             ${adminActionCell}
                         </tr>`;
@@ -1587,15 +1609,6 @@
     async function initApp() {
         await fetchCloudData();
         checkDefaultAdmin();
-
-        // Auto Login ถ้านิยมจดจำ session ไว้
-        const savedUser = localStorage.getItem('savedUser');
-        if (savedUser) {
-            try {
-                currentUser = JSON.parse(savedUser);
-                applyRolePermissions();
-            } catch(e){}
-        }
     }
 
     initApp();
