@@ -226,7 +226,7 @@
 <!-- 3. Main Content -->
 <div id="mainContent" class="container-fluid px-4 d-none">
 
-    <!-- 3.1 หน้า Dashboard ลางาน (ปรับ Layout เป็น 2 คอลัมน์) -->
+    <!-- 3.1 หน้า Dashboard ลางาน -->
     <div id="upcomingView" class="page-section active">
         <div class="row g-4">
             <!-- คอลัมน์ซ้าย: Dashboard ลางานปกติ -->
@@ -250,7 +250,7 @@
                                         <th id="thUpStart">เริ่มวันที่</th>
                                         <th id="thUpEnd">ถึงวันที่</th>
                                         <th id="thUpDays" class="text-center">จำนวน (วัน)</th>
-                                        <th id="thUpReason" class="admin-only">เหตุผล</th>
+                                        <th id="thUpReason">เหตุผล</th>
                                         <th id="thUpStatus">สถานะ</th>
                                         <th id="thUpAction" class="admin-only">จัดการ (Admin)</th>
                                     </tr>
@@ -262,7 +262,7 @@
                 </div>
             </div>
 
-            <!-- คอลัมน์ขวา: หัวข้อหยุดวันเสาร์ (ใหม่) -->
+            <!-- คอลัมน์ขวา: หัวข้อหยุดวันเสาร์ -->
             <div class="col-lg-4">
                 <div class="card shadow-sm h-100 border-start border-warning border-4">
                     <div class="card-header card-header-sat p-3">
@@ -281,7 +281,7 @@
                                     <tr>
                                         <th style="width: 40px;">รูป</th>
                                         <th id="thSatEmp">พนักงาน</th>
-                                        <th id="thSatDate">วันที่</th>
+                                        <th id="thSatDate">วันที่หยุดเสาร์</th>
                                         <th id="thSatReason">เหตุผล</th>
                                         <th id="thSatAction" class="admin-only text-end">จัดการ</th>
                                     </tr>
@@ -367,7 +367,6 @@
                                 <option value="2024">2024</option>
                             </select>
                         </div>
-                        <!-- แถบแสดงรูปใหญ่ขึ้นพร้อมชื่อผู้ใช้ -->
                         <div class="d-flex align-items-center gap-2 bg-white text-dark px-3 py-1-5 rounded-pill shadow-sm">
                             <img id="mySummaryUserAvatar" src="" alt="Avatar" class="profile-header-avatar">
                             <span class="fs-5 fw-bold text-purple px-1" id="mySummaryUserDisplay"></span>
@@ -577,7 +576,6 @@
             return;
         }
         
-        // โหลดรายชื่อพนักงานเข้า Dropdown
         const emps = JSON.parse(localStorage.getItem('employees')) || [];
         const satSelect = document.getElementById('satEmpSelect');
         satSelect.innerHTML = emps.map(e => `<option value="${e.name}">${e.name} (${e.dept || 'WH'})</option>`).join('');
@@ -1126,7 +1124,6 @@
         loadLeaves();
     });
 
-    // คีย์ข้อมูลหยุดวันเสาร์ (Admin Only)
     document.getElementById('satOffForm').addEventListener('submit', function(e) {
         e.preventDefault();
         if (!currentUser || currentUser.role !== 'admin') return;
@@ -1149,7 +1146,7 @@
             endDate: parseDateToISO(satDateRaw),
             customDays: 1,
             reason: satReason || 'หยุดวันเสาร์',
-            status: 'approved' // อนุมัติทันทีเพราะ admin เป็นคนคีย์
+            status: 'approved'
         });
 
         localStorage.setItem('leaveData', JSON.stringify(leaves));
@@ -1530,11 +1527,10 @@
 
         if(upcomingTbody) {
             upcomingTbody.innerHTML = '';
-            // กรองลาปกติ
             const activeLeaves = leaves.filter(leave => leave.leaveType !== 'saturday' && parseDateToISO(leave.endDate) >= todayStr);
 
             if(activeLeaves.length === 0) {
-                const colspanVal = (currentUser && currentUser.role === 'admin') ? 9 : 7;
+                const colspanVal = (currentUser && currentUser.role === 'admin') ? 9 : 8;
                 upcomingTbody.innerHTML = `<tr><td colspan="${colspanVal}" class="text-center text-muted p-4">${lang.noLeavesMsg}</td></tr>`;
             } else {
                 activeLeaves.forEach(leave => {
@@ -1549,7 +1545,7 @@
                     const empUser = users.find(u => String(u.fullName || '').trim() === String(leave.empName || '').trim());
                     const empAvatar = (empUser && empUser.avatar) ? empUser.avatar : defaultAvatar;
 
-                    const reasonCell = (currentUser && currentUser.role === 'admin') ? `<td class="admin-only">${leave.reason}</td>` : '';
+                    const reasonCell = `<td>${leave.reason || '-'}</td>`;
                     
                     let adminActionCell = '';
                     if (currentUser && currentUser.role === 'admin') {
