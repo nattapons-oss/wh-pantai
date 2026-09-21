@@ -28,6 +28,7 @@
 
         .card { border-radius: 15px; border: none; overflow: hidden; }
         .card-header-dashboard { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; }
+        .card-header-saturday { background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%); color: white; }
         .card-header-form { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; }
         .card-header-summary { background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); color: white; }
         .card-header-admin { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; }
@@ -193,11 +194,66 @@
     </div>
 </div>
 
+<!-- Modal เพิ่มวันเสาร์หยุดงาน (สำหรับ Admin) -->
+<div class="modal fade" id="addSaturdayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-saturday text-white">
+                <h5 class="modal-title fw-bold" id="saturdayModalTitle"><i class="fa-solid fa-calendar-plus me-2"></i>เพิ่มวันหยุดเสาร์</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="saturdayForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary" id="lblSaturdayDate">เลือกวันเสาร์ที่หยุด</label>
+                        <input type="text" class="form-control datepicker" id="saturdayDate" placeholder="เลือกวันเสาร์" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-secondary" id="lblSaturdayNote">หมายเหตุ / เหตุผลการหยุด</label>
+                        <input type="text" class="form-control" id="saturdayNote" placeholder="เช่น หยุดประจำเดือน / หยุดชดเชย" required>
+                    </div>
+                    <button type="submit" class="btn btn-info text-white w-100 shadow-sm" id="btnSaveSaturday">บันทึกวันหยุดเสาร์</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 3. Main Content -->
 <div id="mainContent" class="container d-none">
 
     <!-- 3.1 หน้า Dashboard ลางาน -->
     <div id="upcomingView" class="page-section active">
+
+        <!-- Section: วันเสาร์ที่หยุดงาน (ใหม่) -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header card-header-saturday p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 fw-bold" id="saturdayTitle"><i class="fa-solid fa-calendar-day me-2"></i>วันหยุดเสาร์ประจำเดือน</h4>
+                    <button class="btn btn-light btn-sm text-primary fw-bold shadow-sm admin-only" onclick="openSaturdayModal()" id="btnAddSaturday">
+                        <i class="fa-solid fa-plus me-1"></i> เพิ่มวันเสาร์หยุด (Admin)
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted small mb-3" id="saturdayDesc">* แสดงรายการวันเสาร์ที่เป็นวันหยุดประจำของบริษัท</p>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle table-custom-header">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;" id="thSatDate">วันที่</th>
+                                <th id="thSatNote">หมายเหตุ / รายละเอียด</th>
+                                <th id="thSatStatus">สถานะ</th>
+                                <th id="thSatAction" class="admin-only" style="width: 100px;">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="saturdayTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: รายการลางานพนักงาน (คงเดิม) -->
         <div class="card shadow-sm">
             <div class="card-header card-header-dashboard p-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -479,9 +535,10 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzS9JmfhjbDjb8RqkmTNTQvEor1XerriuLVZSnNrHzlRc17_Nv1j50M-J1mX2jGDWp_Vw/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz2IDPGn1cs0RGa57s8FliAqV41jlSQI75gmP9qZBevv6N4ofBwYv7Y6fn-AR4ldl60g/exec";
 
     let profileOffcanvasInstance = null;
+    let saturdayModalInstance = null;
 
     function openProfileModal() {
         if (!profileOffcanvasInstance) {
@@ -493,6 +550,20 @@
     function closeProfileModal() {
         if (profileOffcanvasInstance) {
             profileOffcanvasInstance.hide();
+        }
+    }
+
+    function openSaturdayModal() {
+        if (!saturdayModalInstance) {
+            saturdayModalInstance = new bootstrap.Modal(document.getElementById('addSaturdayModal'));
+        }
+        document.getElementById('saturdayForm').reset();
+        saturdayModalInstance.show();
+    }
+
+    function closeSaturdayModal() {
+        if (saturdayModalInstance) {
+            saturdayModalInstance.hide();
         }
     }
 
@@ -573,7 +644,6 @@
             const data = await res.json();
 
             if (data) {
-                // แทนที่ข้อมูลฝั่ง Local ด้วยข้อมูลล่าสุดจาก Cloud โดยตรง
                 if (data.leaves && Array.isArray(data.leaves)) {
                     data.leaves.forEach(serverItem => {
                         serverItem.startDate = parseDateToISO(serverItem.startDate);
@@ -583,6 +653,13 @@
                         }
                     });
                     localStorage.setItem('leaveData', JSON.stringify(data.leaves));
+                }
+
+                if (data.saturdayHolidays && Array.isArray(data.saturdayHolidays)) {
+                    data.saturdayHolidays.forEach(sat => {
+                        sat.date = parseDateToISO(sat.date);
+                    });
+                    localStorage.setItem('saturdayHolidays', JSON.stringify(data.saturdayHolidays));
                 }
 
                 if (data.users && Array.isArray(data.users)) {
@@ -621,6 +698,7 @@
 
                 loadEmployees();
                 loadLeaves();
+                loadSaturdayHolidays();
             }
         } catch (e) {
             console.error("Fetch Cloud Error:", e);
@@ -639,11 +717,12 @@
             const leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
             const employees = JSON.parse(localStorage.getItem('employees')) || [];
             const users = JSON.parse(localStorage.getItem('users')) || [];
+            const saturdayHolidays = JSON.parse(localStorage.getItem('saturdayHolidays')) || [];
 
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'syncData', leaves, employees, users })
+                body: JSON.stringify({ action: 'syncData', leaves, employees, users, saturdayHolidays })
             });
         } catch (e) {
             console.error("Cloud Sync Error:", e);
@@ -706,13 +785,14 @@
             mySummaryTitle: "สรุปสถิติการลาของฉัน", statMySick: "ลาป่วย", statMyPersonal: "ลากิจ", statMyVacation: "ลาพักร้อน",
             myHistoryTitle: "ประวัติการลาของคุณ", thMyType: "ประเภท", thMyStart: "เริ่มวันที่", thMyEnd: "ถึงวันที่", thMyDays: "จำนวน (วัน)", thMyReason: "เหตุผล", thMyStatus: "สถานะ", thMyActions: "จัดการ",
             profileTitle: "แก้ไขข้อมูลส่วนตัว", lblProfUsername: "ชื่อผู้ใช้", lblProfFullName: "ชื่อ-นามสกุล", lblProfPhone: "เบอร์โทรศัพท์", lblProfDept: "แผนก", btnSaveProfile: "บันทึกการแก้ไข", lblUploadImage: "📷 อัปโหลดรูปโปรไฟล์",
+            saturdayTitle: "วันหยุดเสาร์ประจำเดือน", saturdayDesc: "* แสดงรายการวันเสาร์ที่เป็นวันหยุดประจำของบริษัท", btnAddSaturday: "เพิ่มวันเสาร์หยุด (Admin)", thSatDate: "วันที่", thSatNote: "หมายเหตุ / รายละเอียด", thSatStatus: "สถานะ", thSatAction: "จัดการ",
             upcomingTitle: "Dashboard ลางาน", upcomingDesc: "* แสดงเฉพาะรายการที่ยังไม่ถึงกำหนดหรือกำลังอยู่ในช่วงลาเท่านั้น",
             thUpImg: "รูป", thUpName: "พนักงาน", thUpType: "ประเภท", thUpStart: "เริ่มวันที่", thUpEnd: "ถึงวันที่", thUpDays: "จำนวน (วัน)", thUpReason: "เหตุผล", thUpStatus: "สถานะ", thUpAction: "จัดการ (Admin)",
             dashTitle: "แดชบอร์ดภาพรวม (WH Pantai)", statTotalLeaves: "การลาทั้งหมด", statSickLeaves: "ลาป่วยรวม", statVacation: "ลาพักร้อนรวม",
             tableTitle: "ประวัติการลาทั้งหมด", thName: "พนักงาน", thType: "ประเภท", thStart: "เริ่ม", thEnd: "สิ้นสุด", thAmount: "จำนวน", thReason: "เหตุผล", thStatus: "สถานะ", thAction: "จัดการ (Admin)",
             empFormTitle: "เพิ่มพนักงานใหม่", lblEmpName: "ชื่อ-นามสกุล", lblEmpUser: "Username", lblEmpPhone: "เบอร์โทรศัพท์", lblEmpDept: "แผนก", btnAddEmp: "เพิ่มพนักงาน",
             empTableTitle: "รายชื่อพนักงาน", thEmpName: "ชื่อ", thEmpPhone: "เบอร์โทรศัพท์", thEmpDept: "แผนก", thEmpRole: "สิทธิ์ใช้งาน", thEmpAction: "จัดการ", deleteBtn: "ลบ", editBtn: "แก้ไข", cancelBtn: "ยกเลิก", resetPassBtn: "🔑 รีเซ็ต", setQuotaBtn: "⚙️ โควต้า", approveBtn: "✅ ออนุมัติ", pendingStatus: "⏳ รออนุมัติ", approvedStatus: "🟢 อนุมัติแล้ว",
-            txtDayUnit: "วัน", txtCountUnit: "ครั้ง", noLeavesMsg: "ไม่มีรายการวันลาที่กำลังจะถึงในขณะนี้", noHistoryMsg: "ไม่พบประวัติการลาในปีนี้"
+            txtDayUnit: "วัน", txtCountUnit: "ครั้ง", noLeavesMsg: "ไม่มีรายการวันลาที่กำลังจะถึงในขณะนี้", noHistoryMsg: "ไม่พบประวัติการลาในปีนี้", noSaturdayMsg: "ไม่มีรายการวันเสาร์หยุดในระบบ"
         },
         en: {
             loginTitle: "Login", lblUsername: "Username", lblPassword: "Password", btnLogin: "Login", txtNoAccount: "Don't have an account?", linkGoRegister: "Register",
@@ -723,13 +803,14 @@
             mySummaryTitle: "My Leave Summary", statMySick: "Sick Leave", statMyPersonal: "Personal Leave", statMyVacation: "Annual Leave",
             myHistoryTitle: "Your Leave History", thMyType: "Type", thMyStart: "Start Date", thMyEnd: "End Date", thMyDays: "Days", thMyReason: "Reason", thMyStatus: "Status", thMyActions: "Action",
             profileTitle: "Edit Profile", lblProfUsername: "Username", lblProfFullName: "Full Name", lblProfPhone: "Phone Number", lblProfDept: "Department", btnSaveProfile: "Save Changes", lblUploadImage: "📷 Upload Photo",
+            saturdayTitle: "Monthly Saturday Holidays", saturdayDesc: "* Official company Saturday off schedule", btnAddSaturday: "Add Saturday Off (Admin)", thSatDate: "Date", thSatNote: "Note / Description", thSatStatus: "Status", thSatAction: "Action",
             upcomingTitle: "Leave Dashboard", upcomingDesc: "* Shows active/future leave requests only",
             thUpImg: "Photo", thUpName: "Employee", thUpType: "Type", thUpStart: "Start Date", thUpEnd: "End Date", thUpDays: "Days", thUpReason: "Reason", thUpStatus: "Status", thUpAction: "Action (Admin)",
             dashTitle: "WH Pantai Overview Dashboard", statTotalLeaves: "Total Leaves", statSickLeaves: "Total Sick Leave", statVacation: "Total Vacation",
             tableTitle: "All Leave History", thName: "Employee", thType: "Type", thStart: "Start", thEnd: "End", thAmount: "Amount", thReason: "Reason", thStatus: "Status", thAction: "Action (Admin)",
             empFormTitle: "Add New Employee", lblEmpName: "Full Name", lblEmpUser: "Username", lblEmpPhone: "Phone Number", lblEmpDept: "Department", btnAddEmp: "Add Employee",
             empTableTitle: "Employee Directory", thEmpName: "Name", thEmpPhone: "Phone", thEmpDept: "Department", thEmpRole: "Role", thEmpAction: "Action", deleteBtn: "Delete", editBtn: "Edit", cancelBtn: "Cancel", resetPassBtn: "🔑 Reset", setQuotaBtn: "⚙️ Quotas", approveBtn: "✅ Approve", pendingStatus: "⏳ Pending", approvedStatus: "🟢 Approved",
-            txtDayUnit: "Days", txtCountUnit: "Times", noLeavesMsg: "No upcoming leave requests found.", noHistoryMsg: "No leave history found for this year."
+            txtDayUnit: "Days", txtCountUnit: "Times", noLeavesMsg: "No upcoming leave requests found.", noHistoryMsg: "No leave history found for this year.", noSaturdayMsg: "No Saturday holidays recorded."
         },
         mm: {
             loginTitle: "အကောင့်ဝင်ရန်", lblUsername: "အသုံးပြုသူအမည်", lblPassword: "စကားဝှက်", btnLogin: "ဝင်ရောက်မည်", txtNoAccount: "အကောင့်မရှိသေးပါလား?", linkGoRegister: "အကောင့်ဖွင့်ရန်",
@@ -740,13 +821,14 @@
             mySummaryTitle: "ကျွန်ုပ်၏ ခွင့်ယူမှု အကျဉ်းချုပ်", statMySick: "ဆေးခွင့်", statMyPersonal: "ရှောင်တခင်ခွင့်", statMyVacation: "လုပ်သက်ခွင့်",
             myHistoryTitle: "သင်၏ ခွင့်ယူမှု မှတ်တမ်း", thMyType: "အမျိုးအစား", thMyStart: "စတင်ရက်", thMyEnd: "ပြီးဆုံးရက်", thMyDays: "ရက်ပေါင်း", thMyReason: "အကြောင်းပြချက်", thMyStatus: "အခြေအနေ", thMyActions: "လုပ်ဆောင်ချက်",
             profileTitle: "ကိုယ်ရေးအချက်အလက် ပြင်ရန်", lblProfUsername: "အသုံးပြုသူအမည်", lblProfFullName: "အမည်အပြည့်အစုံ", lblProfPhone: "ဖုန်းနံပါတ်", lblProfDept: "ဌာန", btnSaveProfile: "သိမ်းဆည်းမည်", lblUploadImage: "📷 ဓာတ်ပုံတင်မည်",
+            saturdayTitle: "စနေနေ့ ရုံးပိတ်ရက်များ", saturdayDesc: "* ကုမ္ပဏီ၏ တရားဝင် စနေနေ့ ရုံးပိတ်ရက်များ", btnAddSaturday: "စနေနေ့ ပိတ်ရက်ထည့်ရန် (Admin)", thSatDate: "ရက်စွဲ", thSatNote: "မှတ်ချက်", thSatStatus: "အခြေအနေ", thSatAction: "လုပ်ဆောင်ချက်",
             upcomingTitle: "ခွင့်ယူမှု ဒက်ရှ်ဘုတ်", upcomingDesc: "* လာမည့် သို့မဟုတ် လက်ရှိ ခွင့်ယူထားသည်များကိုသာ ပြသထားသည်",
             thUpImg: "ပုံ", thUpName: "ဝန်ထမ်း", thUpType: "အမျိုးအစား", thUpStart: "စတင်ရက်", thUpEnd: "ပြီးဆုံးရက်", thUpDays: "ရက်ပေါင်း", thUpReason: "အကြောင်းပြချက်", thUpStatus: "အခြေအနေ", thUpAction: "လုပ်ဆောင်ချက် (Admin)",
             dashTitle: "WH Pantai အထွေထွေ ဒက်ရှ်ဘုတ်", statTotalLeaves: "စုစုပေါင်း ခွင့်ယူမှု", statSickLeaves: "စုစုပေါင်း ဆေးခွင့်", statVacation: "စုစုပေါင်း လုပ်သက်ခွင့်",
             tableTitle: "ခွင့်ယူမှု မှတ်တမ်းအားလုံး", thName: "ဝန်ထမ်း", thType: "အမျိုးအစား", thStart: "စတင်ရက်", thEnd: "ပြီးဆုံးရက်", thAmount: "အရေအတွက်", thReason: "အကြောင်းပြချက်", thStatus: "အခြေအနေ", thAction: "လုပ်ဆောင်ချက် (Admin)",
             empFormTitle: "ဝန်ထမ်းသစ်ထည့်ရန်", lblEmpName: "အမည်အပြည့်အစုံ", lblEmpUser: "Username", lblEmpPhone: "ဖုန်းနံပါတ်", lblEmpDept: "ဌာန", btnAddEmp: "ဝန်ထမ်းထည့်မည်",
             empTableTitle: "ဝန်ထမ်းစာရင်း", thEmpName: "အမည်", thEmpPhone: "ဖုန်းနံပါတ်", thEmpDept: "ဌာန", thEmpRole: "ရာထူး/စနစ်", thEmpAction: "လုပ်ဆောင်ချက်", deleteBtn: "ဖျက်မည်", editBtn: "ပြင်မည်", cancelBtn: "ပယ်ဖျက်မည်", resetPassBtn: "🔑 စကားဝှက်ပြင်မည်", setQuotaBtn: "⚙️ ခွင့်โတွတာ", approveBtn: "✅ အတည်ပြုမည်", pendingStatus: "⏳ စောင့်ဆိုင်းဆဲ", approvedStatus: "🟢 ခွင့်ပြုပြီး",
-            txtDayUnit: "ရက်", txtCountUnit: "ကြိမ်", noLeavesMsg: "လာမည့် ခွင့်ယူမှုများ မရှိသေးပါ", noHistoryMsg: "ဒီနှစ်အတွက် ခွင့်ယူမှု မှတ်တမ်း မရှိသေးပါ"
+            txtDayUnit: "ရက်", txtCountUnit: "ကြိမ်", noLeavesMsg: "လာမည့် ခွင့်ယူမှုများ မရှိသေးပါ", noHistoryMsg: "ဒီနှစ်အတွက် ခွင့်ယူမှု မှတ်တမ်း မရှိသေးပါ", noSaturdayMsg: "စနေနေ့ ပိတ်ရက်များ မရှိသေးပါ"
         }
     };
 
@@ -763,6 +845,10 @@
         dateFormat: "d/m/Y", 
         allowInput: true,
         onChange: function() { autoCalculateLeaveDays(); }
+    });
+    let saturdayPicker = flatpickr("#saturdayDate", {
+        dateFormat: "d/m/Y",
+        allowInput: true
     });
 
     function calculateDays(startDateStr, endDateStr) {
@@ -811,6 +897,7 @@
 
         loadEmployees();
         loadLeaves();
+        loadSaturdayHolidays();
     }
 
     function showAuthPage(pageCardId) {
@@ -1035,6 +1122,7 @@
         tempAvatarBase64 = null;
         cancelEditMode();
         closeProfileModal();
+        closeSaturdayModal();
         document.getElementById('loginForm').reset();
         document.getElementById('registerForm').reset();
         document.getElementById('authContainer').classList.remove('d-none');
@@ -1057,6 +1145,7 @@
         if(pageId === 'upcomingView') {
             document.getElementById('menuUpcoming').classList.add('active');
             loadLeaves();
+            loadSaturdayHolidays();
         }
         if(pageId === 'requestView') document.getElementById('menuRequest').classList.add('active');
         if(pageId === 'mySummaryView') {
@@ -1065,6 +1154,85 @@
         }
         if(pageId === 'dashboardView') document.getElementById('menuDashboard').classList.add('active');
         if(pageId === 'employeeView') document.getElementById('menuEmployee').classList.add('active');
+    }
+
+    // ==========================================
+    // 3. ฟังก์ชันจัดการวันหยุดเสาร์ (Saturday Holidays)
+    // ==========================================
+    document.getElementById('saturdayForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('เฉพาะ Admin เท่านั้นที่สามารถเพิ่มวันเสาร์หยุดได้');
+            return;
+        }
+
+        const dateRaw = document.getElementById('saturdayDate').value;
+        const note = document.getElementById('saturdayNote').value.trim();
+
+        if (!dateRaw) {
+            alert('กรุณาเลือกวันที่');
+            return;
+        }
+
+        let satList = JSON.parse(localStorage.getItem('saturdayHolidays')) || [];
+        satList.push({
+            id: Date.now(),
+            date: parseDateToISO(dateRaw),
+            note: note
+        });
+
+        localStorage.setItem('saturdayHolidays', JSON.stringify(satList));
+        syncToCloud();
+        playAudioNotification('success');
+        alert('บันทึกวันหยุดเสาร์เรียบร้อยแล้ว');
+        closeSaturdayModal();
+        loadSaturdayHolidays();
+    });
+
+    async function deleteSaturdayHoliday(id) {
+        if (!currentUser || currentUser.role !== 'admin') {
+            alert('เฉพาะ Admin เท่านั้นที่สามารถลบวันหยุดได้');
+            return;
+        }
+
+        if (confirm('ต้องการลบรายการวันเสาร์หยุดนี้ใช่หรือไม่?')) {
+            let satList = JSON.parse(localStorage.getItem('saturdayHolidays')) || [];
+            satList = satList.filter(sat => String(sat.id) !== String(id));
+            localStorage.setItem('saturdayHolidays', JSON.stringify(satList));
+
+            await syncToCloud();
+            playAudioNotification('success');
+            loadSaturdayHolidays();
+        }
+    }
+
+    function loadSaturdayHolidays() {
+        let satList = JSON.parse(localStorage.getItem('saturdayHolidays')) || [];
+        const tbody = document.getElementById('saturdayTableBody');
+        const lang = translations[currentLang];
+
+        if (tbody) {
+            tbody.innerHTML = '';
+            if (satList.length === 0) {
+                const colSpan = (currentUser && currentUser.role === 'admin') ? 4 : 3;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center text-muted p-3">${lang.noSaturdayMsg || 'ไม่มีรายการวันเสาร์หยุดในระบบ'}</td></tr>`;
+            } else {
+                satList.sort((a, b) => new Date(a.date) - new Date(b.date));
+                satList.forEach(sat => {
+                    const actionCell = (currentUser && currentUser.role === 'admin') 
+                        ? `<td class="admin-only"><button class="btn btn-outline-danger btn-sm" onclick="deleteSaturdayHoliday('${sat.id}')">🗑️</button></td>` 
+                        : '';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold text-primary"><i class="fa-regular fa-calendar-check me-2"></i>${formatDateDisplay(sat.date)}</td>
+                            <td>${sat.note}</td>
+                            <td><span class="badge bg-info text-dark px-2 py-1"><i class="fa-solid fa-mug-hot me-1"></i>วันหยุดบริษัท</span></td>
+                            ${actionCell}
+                        </tr>`;
+                });
+            }
+        }
     }
 
     document.getElementById('empForm').addEventListener('submit', function(e) {
@@ -1084,7 +1252,6 @@
         loadEmployees();
     });
 
-    // 🟢 แก้ไข: ลบพนักงานออกจาก LocalStorage และส่งค่าซิงค์ขึ้น Cloud ทันที
     async function deleteEmployee(id) {
         if (confirm('คุณต้องการลบรายชื่อพนักงานนี้ใช่หรือไม่?')) {
             let emps = JSON.parse(localStorage.getItem('employees')) || [];
@@ -1376,7 +1543,6 @@
         }
     }
 
-    // 🟢 แก้ไข: ลบการลาออกจาก LocalStorage และซิงค์ลบออกบน Google Sheet ทันที
     async function deleteLeave(id) {
         if (confirm('คุณต้องการยกเลิก/ลบรายการลานี้ใช่หรือไม่?')) {
             let leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
@@ -1578,6 +1744,7 @@
     async function initApp() {
         await fetchCloudData();
         checkDefaultAdmin();
+        loadSaturdayHolidays();
     }
 
     initApp();
