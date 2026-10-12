@@ -344,6 +344,10 @@
                     <input type="text" class="form-control" id="regDept" placeholder="เช่น WH, Logistics, Admin" required>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label text-secondary fw-semibold" id="lblRegPosition">ตำแหน่งงาน / Position</label>
+                    <input type="text" class="form-control" id="regPosition" placeholder="เช่น Forklift Driver, Supervisor" required>
+                </div>
+                <div class="mb-3">
                     <label class="form-label text-secondary fw-semibold" id="lblRegUser">ชื่อผู้ใช้ / Username</label>
                     <input type="text" class="form-control" id="regUsername" required>
                 </div>
@@ -427,9 +431,13 @@
                 <label class="form-label text-secondary fw-semibold small" id="lblProfPhone">เบอร์โทรศัพท์</label>
                 <input type="tel" class="form-control form-control-sm" id="profPhone" placeholder="เช่น 0812345678" required>
             </div>
-            <div class="mb-4">
+            <div class="mb-3">
                 <label class="form-label text-secondary fw-semibold small" id="lblProfDept">แผนก</label>
                 <input type="text" class="form-control form-control-sm" id="profDept" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label text-secondary fw-semibold small" id="lblProfPosition">ตำแหน่งงาน</label>
+                <input type="text" class="form-control form-control-sm" id="profPosition">
             </div>
             <button type="submit" class="btn btn-primary w-100 fs-6 shadow-sm" id="btnSaveProfile">บันทึกการแก้ไข</button>
         </form>
@@ -467,6 +475,7 @@
                         <table class="table table-hover align-middle table-custom-header">
                             <thead>
                                 <tr>
+                                    <th id="thUpCreated">บันทึกเมื่อ</th>
                                     <th style="width: 60px;" id="thUpImg">รูป</th>
                                     <th id="thUpName">พนักงาน</th>
                                     <th id="thUpType">ประเภท</th>
@@ -476,6 +485,7 @@
                                     <th id="thUpReason" class="admin-only">เหตุผล</th>
                                     <th id="thUpStatus">สถานะ</th>
                                     <th id="thUpAction" class="admin-only">จัดการ (Admin)</th>
+                                    <th id="thUpApproved">อนุมัติเมื่อ</th>
                                 </tr>
                             </thead>
                             <tbody id="upcomingTableBody"></tbody>
@@ -714,6 +724,7 @@
                 </div>
             </div>
             <div class="card-body p-4">
+                <div id="mySummaryProfile"></div>
                 <div class="row mb-4">
                     <div class="col-md-4 mb-2">
                         <div class="card stat-card bg-danger p-3 shadow-sm text-center">
@@ -745,6 +756,7 @@
                                 <th id="thMyEnd">ถึงวันที่</th>
                                 <th id="thMyDays">จำนวน (วัน)</th>
                                 <th id="thMyReason">เหตุผล</th>
+                                <th id="thMyCreated">บันทึกเมื่อ</th>
                                 <th id="thMyStatus">สถานะ</th>
                                 <th id="thMyActions">จัดการ</th>
                             </tr>
@@ -775,6 +787,7 @@
                 </div>
             </div>
             <div class="card-body p-4">
+                <div id="adminEmpProfile"></div>
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card stat-card bg-primary p-3 shadow-sm text-center">
@@ -813,6 +826,7 @@
                                 <th id="thEnd">สิ้นสุด</th>
                                 <th id="thAmount">จำนวน</th>
                                 <th id="thReason">เหตุผล</th>
+                                <th id="thCreated">บันทึกเมื่อ</th>
                                 <th id="thStatus">สถานะ</th>
                                 <th id="thAction">จัดการ (Admin)</th>
                             </tr>
@@ -826,32 +840,82 @@
 
     <!-- 3.5 หน้าจัดการพนักงาน -->
     <div id="employeeView" class="page-section">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <div class="card-header card-header-emp p-3">
-                        <h5 class="mb-0 fw-bold" id="empFormTitle">เพิ่มพนักงานใหม่</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <form id="empForm">
+        <div class="card shadow-sm">
+            <div class="card-header card-header-emp p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0 fw-bold" id="empTableTitle">รายชื่อพนักงาน</h5>
+                <button type="button" class="btn btn-light btn-sm fw-semibold shadow-sm" onclick="openAddEmployee()">
+                    <i class="fa-solid fa-user-plus me-1"></i><span id="btnOpenAddEmp">เพิ่มพนักงาน</span>
+                </button>
+            </div>
+            <div class="card-body p-3">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle table-custom-header">
+                        <thead>
+                            <tr>
+                                <th id="thEmpName">ชื่อ</th>
+                                <th id="thEmpUser">Username</th>
+                                <th id="thEmpPhone">เบอร์โทรศัพท์</th>
+                                <th id="thEmpWork">ช่วงเวลาทำงาน</th>
+                                <th id="thEmpQuota">โควต้าวันลา (ป่วย/กิจ/พักร้อน)</th>
+                                <th id="thEmpRole">สิทธิ์ใช้งาน</th>
+                                <th id="thEmpAction">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Pop-up เพิ่มพนักงานใหม่ (Admin) -->
+<div class="modal fade" id="empAddModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content" style="border: 0; border-radius: 20px; overflow: hidden;">
+            <div class="modal-header card-header-emp text-white border-0">
+                <h5 class="modal-title fw-bold" id="empFormTitle">เพิ่มพนักงานใหม่</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+<form id="empForm">
                             <div class="text-center mb-3">
                                 <img id="newEmpAvatarPreview" alt="Employee photo preview" class="profile-avatar-preview shadow-sm">
                                 <label for="newEmpImageInput" class="btn btn-outline-primary btn-sm rounded-pill" id="lblEmpPhoto">📷 เลือกรูปภาพ</label>
                                 <input type="file" id="newEmpImageInput" accept="image/*" class="d-none" onchange="previewNewEmpImage(event)">
                             </div>
-                            <div class="mb-3">
+                            <div class="row">
+<div class="col-md-6 mb-3">
                                 <label class="form-label text-secondary fw-semibold" id="lblEmpName">ชื่อ-นามสกุล</label>
                                 <input type="text" class="form-control" id="newEmpName" required>
                             </div>
-                            <div class="mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label text-secondary fw-semibold" id="lblEmpPhone">เบอร์โทรศัพท์</label>
                                 <input type="tel" class="form-control" id="newEmpPhone" placeholder="เช่น 0812345678" required>
                             </div>
-                            <div class="mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label text-secondary fw-semibold" id="lblEmpDept">แผนก</label>
                                 <input type="text" class="form-control" id="newEmpDept" required>
                             </div>
-                            <div class="border-top pt-3 mt-4 mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary fw-semibold" id="lblEmpPosition">ตำแหน่งงาน</label>
+                                <input type="text" class="form-control" id="newEmpPosition">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary fw-semibold" id="lblEmpStart">วันที่เริ่มงาน</label>
+                                <input type="text" class="form-control" id="newEmpStart" placeholder="วัน/เดือน/ปี" autocomplete="off">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary fw-semibold" id="lblEmpEnd">วันที่ออกงาน (กรณีลาออก)</label>
+                                <input type="text" class="form-control" id="newEmpEnd" placeholder="วัน/เดือน/ปี (เว้นว่างถ้ายังทำงานอยู่)" autocomplete="off">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary fw-semibold" id="lblEmpBirth">วันเกิด (ใช้คำนวณอายุ)</label>
+                                <input type="text" class="form-control" id="newEmpBirth" placeholder="วัน/เดือน/ปี" autocomplete="off">
+                            </div>
+                            </div>
+<div class="border-top pt-3 mt-4 mb-3">
                                 <div class="small text-muted mb-3" id="empAccountHint"><i class="fa-solid fa-key me-1"></i>ไม่บังคับ — กรอก Username และรหัสผ่านเพื่อสร้างบัญชีเข้าสู่ระบบให้พนักงาน</div>
                                 <div class="mb-3">
                                     <label class="form-label text-secondary fw-semibold" id="lblEmpUser">Username</label>
@@ -872,38 +936,11 @@
                                     </select>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-info text-white w-100 shadow-sm" id="btnAddEmp">เพิ่มพนักงาน</button>
+                            <button type="submit" class="btn btn-info text-white w-100 shadow-sm mt-2" id="btnAddEmp">เพิ่มพนักงาน</button>
                         </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-8">
-                <div class="card shadow-sm">
-                    <div class="card-header card-header-emp p-3">
-                        <h5 class="mb-0 fw-bold" id="empTableTitle">รายชื่อพนักงาน</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle table-custom-header">
-                                <thead>
-                                    <tr>
-                                        <th id="thEmpName">ชื่อ</th>
-                                        <th id="thEmpUser">Username</th>
-                                        <th id="thEmpPhone">เบอร์โทรศัพท์</th>
-                                        <th id="thEmpQuota">โควต้าวันลา (ป่วย/กิจ/พักร้อน)</th>
-                                        <th id="thEmpRole">สิทธิ์ใช้งาน</th>
-                                        <th id="thEmpAction">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="empTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- Pop-up แก้ไขข้อมูลพนักงาน (Admin) -->
@@ -937,6 +974,22 @@
                             <div class="col-sm-6">
                                 <label class="form-label text-secondary fw-semibold">แผนก / Department</label>
                                 <input type="text" class="form-control" id="editEmpDept">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-secondary fw-semibold">ตำแหน่งงาน / Position</label>
+                                <input type="text" class="form-control" id="editEmpPosition">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-secondary fw-semibold">วันเกิด / Birth Date</label>
+                                <input type="text" class="form-control" id="editEmpBirth" placeholder="วัน/เดือน/ปี" autocomplete="off">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-secondary fw-semibold">วันที่เริ่มงาน / Start Date</label>
+                                <input type="text" class="form-control" id="editEmpStart" placeholder="วัน/เดือน/ปี" autocomplete="off">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-secondary fw-semibold">วันที่ออกงาน / Resign Date</label>
+                                <input type="text" class="form-control" id="editEmpEnd" placeholder="เว้นว่างถ้ายังทำงานอยู่" autocomplete="off">
                             </div>
                             <div class="col-12">
                                 <label class="form-label text-secondary fw-semibold">โควต้าวันลา / Leave Quota (ป่วย / กิจ / พักร้อน)</label>
@@ -1137,6 +1190,9 @@
                             };
                         }
                         serverEmp.phone = formatPhoneNumber(serverEmp.phone);
+                        serverEmp.startDate = parseDateToISO(serverEmp.startDate);
+                        serverEmp.endDate = parseDateToISO(serverEmp.endDate);
+                        serverEmp.birthDate = parseDateToISO(serverEmp.birthDate);
                         return serverEmp;
                     });
                     localStorage.setItem('employees', JSON.stringify(formattedEmps));
@@ -1380,6 +1436,13 @@
     let compStartPicker = flatpickr("#compStartDate", { dateFormat: "d/m/Y", allowInput: true, onChange: function() { autoCalculateCompDays(); } });
     let compEndPicker = flatpickr("#compEndDate", { dateFormat: "d/m/Y", allowInput: true, onChange: function() { autoCalculateCompDays(); } });
 
+    let newEmpStartPicker = flatpickr("#newEmpStart", { dateFormat: "d/m/Y", allowInput: true });
+    let newEmpEndPicker = flatpickr("#newEmpEnd", { dateFormat: "d/m/Y", allowInput: true });
+    let editEmpStartPicker = flatpickr("#editEmpStart", { dateFormat: "d/m/Y", allowInput: true, static: true });
+    let editEmpEndPicker = flatpickr("#editEmpEnd", { dateFormat: "d/m/Y", allowInput: true, static: true });
+    let newEmpBirthPicker = flatpickr("#newEmpBirth", { dateFormat: "d/m/Y", allowInput: true, maxDate: "today" });
+    let editEmpBirthPicker = flatpickr("#editEmpBirth", { dateFormat: "d/m/Y", allowInput: true, static: true, maxDate: "today" });
+
     function calculateDays(startDateStr, endDateStr) {
         if (!startDateStr || !endDateStr) return 0;
         const start = new Date(parseDateToISO(startDateStr));
@@ -1542,6 +1605,7 @@
         const fullName = document.getElementById('regFullName').value.trim();
         const phone = formatPhoneNumber(document.getElementById('regPhone').value.trim());
         const dept = document.getElementById('regDept').value.trim();
+        const position = document.getElementById('regPosition').value.trim();
         const username = document.getElementById('regUsername').value.trim();
         const password = document.getElementById('regPassword').value.trim();
 
@@ -1552,11 +1616,11 @@
             return;
         }
 
-        users.push({ username: String(username), password: String(password), fullName, phone, dept, role: 'user', avatar: defaultAvatar });
+        users.push({ username: String(username), password: String(password), fullName, phone, dept, position, role: 'user', avatar: defaultAvatar });
         localStorage.setItem('users', JSON.stringify(users));
 
         let emps = JSON.parse(localStorage.getItem('employees')) || [];
-        emps.push({ id: genId(), name: fullName, phone: phone, dept: dept, quota: { sick: 30, personal: 6, vacation: 7 } });
+        emps.push({ id: genId(), name: fullName, phone: phone, dept: dept, position: position, quota: { sick: 30, personal: 6, vacation: 7 } });
         localStorage.setItem('employees', JSON.stringify(emps));
 
         syncToCloud();
@@ -1628,6 +1692,7 @@
         document.getElementById('profFullName').value = currentUser.fullName;
         document.getElementById('profPhone').value = formatPhoneNumber(currentUser.phone);
         document.getElementById('profDept').value = currentUser.dept;
+        document.getElementById('profPosition').value = getEmpPosition(currentUser);
 
         const adminElements = document.querySelectorAll('.admin-only');
         if (currentUser.role === 'admin') {
@@ -1685,6 +1750,7 @@
         const newFullName = document.getElementById('profFullName').value.trim();
         const newPhone = formatPhoneNumber(document.getElementById('profPhone').value.trim());
         const newDept = document.getElementById('profDept').value.trim();
+        const newPosition = document.getElementById('profPosition').value.trim();
 
         let users = JSON.parse(localStorage.getItem('users')) || [];
         let userIndex = users.findIndex(u => String(u.username || '').trim().toLowerCase() === String(currentUser.username || '').trim().toLowerCase());
@@ -1692,6 +1758,7 @@
             users[userIndex].fullName = newFullName;
             users[userIndex].phone = newPhone;
             users[userIndex].dept = newDept;
+            users[userIndex].position = newPosition;
             if (tempAvatarBase64) users[userIndex].avatar = tempAvatarBase64;
             localStorage.setItem('users', JSON.stringify(users));
             currentUser = users[userIndex];
@@ -1703,6 +1770,7 @@
             emps[empIndex].name = newFullName;
             emps[empIndex].phone = newPhone;
             emps[empIndex].dept = newDept;
+            emps[empIndex].position = newPosition;
             localStorage.setItem('employees', JSON.stringify(emps));
         }
 
@@ -1807,7 +1875,16 @@
         });
     }
 
+    let addEmpModalInstance = null;
+    function openAddEmployee() {
+        if (!addEmpModalInstance) addEmpModalInstance = new bootstrap.Modal(document.getElementById('empAddModal'));
+        addEmpModalInstance.show();
+    }
+
     function resetNewEmpForm() {
+        newEmpStartPicker.clear();
+        newEmpEndPicker.clear();
+        newEmpBirthPicker.clear();
         newEmpAvatarBase64 = null;
         document.getElementById('newEmpAvatarPreview').src = defaultAvatar;
         document.getElementById('newEmpImageInput').value = '';
@@ -1837,10 +1914,19 @@
         const name = document.getElementById('newEmpName').value.trim();
         const phone = formatPhoneNumber(document.getElementById('newEmpPhone').value.trim());
         const dept = document.getElementById('newEmpDept').value.trim();
+        const position = document.getElementById('newEmpPosition').value.trim();
+        const birthDate = parseDateToISO(document.getElementById('newEmpBirth').value.trim());
         const username = document.getElementById('newEmpUsername').value.trim();
         const password = document.getElementById('newEmpPassword').value.trim();
         const role = document.getElementById('newEmpRole').value === 'admin' ? 'admin' : 'user';
         const wantsAccount = username !== '' || password !== '';
+        const startWork = parseDateToISO(document.getElementById('newEmpStart').value.trim());
+        const endWork = parseDateToISO(document.getElementById('newEmpEnd').value.trim());
+        if (startWork && endWork && endWork < startWork) {
+            playAudioNotification('error');
+            alert('วันที่ออกงานต้องไม่ก่อนวันที่เริ่มงาน / Resign date cannot be before start date');
+            return;
+        }
 
         let users = JSON.parse(localStorage.getItem('users')) || [];
 
@@ -1868,6 +1954,10 @@
             name: name,
             phone: phone,
             dept: dept,
+            position: position,
+            birthDate: birthDate,
+            startDate: startWork,
+            endDate: endWork,
             quota: { sick: 30, personal: 6, vacation: 7 }
         });
         localStorage.setItem('employees', JSON.stringify(emps));
@@ -1879,6 +1969,7 @@
                 fullName: name,
                 phone: phone,
                 dept: dept,
+                position: position,
                 role: role,
                 avatar: newEmpAvatarBase64 || defaultAvatar
             });
@@ -1889,6 +1980,7 @@
         playAudioNotification('success');
         this.reset();
         resetNewEmpForm();
+        if (addEmpModalInstance) addEmpModalInstance.hide();
         loadEmployees();
     });
 
@@ -1928,6 +2020,10 @@
         document.getElementById('editEmpName').value = emp.name || '';
         document.getElementById('editEmpPhone').value = formatPhoneNumber(emp.phone) === '-' ? '' : formatPhoneNumber(emp.phone);
         document.getElementById('editEmpDept').value = emp.dept || '';
+        document.getElementById('editEmpPosition').value = emp.position || '';
+        if (emp.birthDate) editEmpBirthPicker.setDate(formatDateDisplay(emp.birthDate)); else editEmpBirthPicker.clear();
+        if (emp.startDate) editEmpStartPicker.setDate(formatDateDisplay(emp.startDate)); else editEmpStartPicker.clear();
+        if (emp.endDate) editEmpEndPicker.setDate(formatDateDisplay(emp.endDate)); else editEmpEndPicker.clear();
         document.getElementById('editQuotaSick').value = q.sick;
         document.getElementById('editQuotaPersonal').value = q.personal;
         document.getElementById('editQuotaVacation').value = q.vacation;
@@ -1979,12 +2075,17 @@
         const name = document.getElementById('editEmpName').value.trim();
         const phone = formatPhoneNumber(document.getElementById('editEmpPhone').value.trim());
         const dept = document.getElementById('editEmpDept').value.trim();
+        const position = document.getElementById('editEmpPosition').value.trim();
+        const birthDate = parseDateToISO(document.getElementById('editEmpBirth').value.trim());
         const username = document.getElementById('editEmpUsername').value.trim();
         const password = document.getElementById('editEmpPassword').value.trim();
         const role = document.getElementById('editEmpRole').value === 'admin' ? 'admin' : 'user';
         const fail = (msg) => { playAudioNotification('error'); alert(msg); };
 
         if (name === '') return fail('กรุณากรอกชื่อ-นามสกุล');
+        const startWork = parseDateToISO(document.getElementById('editEmpStart').value.trim());
+        const endWork = parseDateToISO(document.getElementById('editEmpEnd').value.trim());
+        if (startWork && endWork && endWork < startWork) return fail('วันที่ออกงานต้องไม่ก่อนวันที่เริ่มงาน / Resign date cannot be before start date');
         if (emps.some((x, i) => i !== empIdx && String(x.name || '').trim() === name)) return fail('มีพนักงานชื่อนี้อยู่แล้ว / Name already exists');
         if (users.some((u, i) => i !== accIdx && String(u.fullName || '').trim() === name)) return fail('มีบัญชีผู้ใช้ที่ใช้ชื่อ-นามสกุลนี้แล้ว / Name already used by another account');
 
@@ -2001,6 +2102,10 @@
         emps[empIdx].name = name;
         emps[empIdx].phone = phone;
         emps[empIdx].dept = dept;
+        emps[empIdx].position = position;
+        emps[empIdx].birthDate = birthDate;
+        emps[empIdx].startDate = startWork;
+        emps[empIdx].endDate = endWork;
         emps[empIdx].quota = {
             sick: readQ('editQuotaSick', oldQuota.sick),
             personal: readQ('editQuotaPersonal', oldQuota.personal),
@@ -2015,12 +2120,13 @@
             u.fullName = name;
             u.phone = phone;
             u.dept = dept;
+            u.position = position;
             if (!document.getElementById('editEmpRole').disabled) u.role = role;
             if (password !== '') u.password = password;
             if (editEmpAvatar) u.avatar = editEmpAvatar;
             touchedUser = u;
         } else if (username !== '') {
-            touchedUser = { username: username, password: password, fullName: name, phone: phone, dept: dept, role: role, avatar: editEmpAvatar || defaultAvatar };
+            touchedUser = { username: username, password: password, fullName: name, phone: phone, dept: dept, position: position, role: role, avatar: editEmpAvatar || defaultAvatar };
             users.push(touchedUser);
         }
 
@@ -2047,6 +2153,7 @@
             document.getElementById('profFullName').value = currentUser.fullName;
             document.getElementById('profPhone').value = formatPhoneNumber(currentUser.phone);
             document.getElementById('profDept').value = currentUser.dept;
+        document.getElementById('profPosition').value = getEmpPosition(currentUser);
         }
 
         syncToCloud();
@@ -2190,6 +2297,8 @@
 
         if (idx !== -1) {
             leaves[idx].status = 'approved';
+            leaves[idx].approvedAt = new Date().toISOString();
+            leaves[idx].approvedBy = currentUser.fullName;
             localStorage.setItem('leaveData', JSON.stringify(leaves));
             syncToCloud();
             playAudioNotification('success');
@@ -2203,6 +2312,8 @@
         let users = JSON.parse(localStorage.getItem('users')) || [];
         const lang = translations[currentLang] || translations['th'];
         
+        const allLeavesForEmp = JSON.parse(localStorage.getItem('leaveData')) || [];
+        const sumYear = String(new Date().getFullYear());
         const tbody = document.getElementById('empTableBody');
         if(tbody) {
             tbody.innerHTML = '';
@@ -2218,9 +2329,11 @@
                 }
                 if (!q || typeof q !== 'object') q = { sick: 30, personal: 6, vacation: 7 };
 
-                let quotaDisplay = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">${lang.optSick} ${q.sick}</span> ` +
-                                   `<span class="badge bg-warning-subtle text-dark border border-warning-subtle ms-1">${lang.optPersonal} ${q.personal}</span> ` +
-                                   `<span class="badge bg-success-subtle text-success border border-success-subtle ms-1">${lang.optVacation} ${q.vacation}</span>`;
+                const used = empLeaveUsed(allLeavesForEmp, emp.name, sumYear);
+                const pendTxt = used.pending > 0 ? `<div class="small text-muted mt-1">${lang.txtPending}: ${used.pending}</div>` : '';
+                let quotaDisplay = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">${lang.optSick} ${used.sick}/${q.sick}</span> ` +
+                                   `<span class="badge bg-warning-subtle text-dark border border-warning-subtle ms-1">${lang.optPersonal} ${used.personal}/${q.personal}</span> ` +
+                                   `<span class="badge bg-success-subtle text-success border border-success-subtle ms-1">${lang.optVacation} ${used.vacation}/${q.vacation}</span>` + pendTxt;
 
                 if (userAcc) {
                     if (currentUser && currentUser.role === 'admin') {
@@ -2248,11 +2361,12 @@
                         <td class="fw-bold">
                             <div class="d-flex align-items-center justify-content-center gap-2">
                                 <img src="${(userAcc && userAcc.avatar) ? userAcc.avatar : defaultAvatar}" alt="" class="table-avatar">
-                                <span>${emp.name}</span>
+                                <div><span>${emp.name}</span>${emp.position ? `<div class="small text-muted fw-normal">${emp.position}</div>` : ''}</div>
                             </div>
                         </td>
                         <td>${usernameDisplay}</td>
                         <td>${phoneDisplay}</td>
+                        <td>${workPeriodHtml(emp, lang)}</td>
                         <td>${quotaDisplay}</td>
                         <td style="width: 130px;">${roleHtml}</td>
                         <td>
@@ -2304,6 +2418,7 @@
                 leaves[idx].endDate = parseDateToISO(endRaw);
                 leaves[idx].customDays = daysInput;
                 leaves[idx].reason = document.getElementById('reason').value;
+                leaves[idx].updatedAt = new Date().toISOString();
             }
             playAudioNotification('success');
             alert('แก้ไขรายการวันลาเรียบร้อยแล้ว!');
@@ -2316,7 +2431,9 @@
                 endDate: parseDateToISO(endRaw),
                 customDays: daysInput,
                 reason: document.getElementById('reason').value,
-                status: 'pending'
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.fullName
             });
             playAudioNotification('success');
             alert('บันทึกการลาเรียบร้อย (รอ Admin อนุมัติ)');
@@ -2597,7 +2714,7 @@
             const activeLeaves = leaves.filter(leave => parseDateToISO(leave.endDate) >= todayStr);
 
             if(activeLeaves.length === 0) {
-                const colspanVal = (currentUser && currentUser.role === 'admin') ? 9 : 7;
+                const colspanVal = (currentUser && currentUser.role === 'admin') ? 11 : 9;
                 upcomingTbody.innerHTML = `<tr><td colspan="${colspanVal}" class="text-center text-muted p-4">${lang.noLeavesMsg}</td></tr>`;
             } else {
                 activeLeaves.forEach(leave => {
@@ -2622,6 +2739,7 @@
 
                     upcomingTbody.innerHTML += `
                         <tr>
+                            <td>${leaveCreatedCell(leave)}</td>
                             <td><img src="${empAvatar}" alt="${leave.empName}" class="table-avatar shadow-sm"></td>
                             <td class="fw-bold">${leave.empName}</td>
                             <td>${typeBadge}</td>
@@ -2631,6 +2749,7 @@
                             ${reasonCell}
                             <td>${statusBadge}</td>
                             ${adminActionCell}
+                            <td>${approvalCellHtml(leave)}</td>
                         </tr>`;
                 });
             }
@@ -2732,6 +2851,9 @@
             let currentEmp = emps.find(e => String(e.name || '').trim() === String(currentUser.fullName || '').trim());
             let quota = (currentEmp && currentEmp.quota) ? currentEmp.quota : { sick: 30, personal: 6, vacation: 7 };
 
+            const myProfEl = document.getElementById('mySummaryProfile');
+            if (myProfEl) myProfEl.innerHTML = empProfileCardHtml(currentEmp, currentUser, selectedMyYear, leaves, lang);
+
             const remSick = quota.sick - myUsedSick;
             const remPersonal = quota.personal - myUsedPersonal;
             const remVacation = quota.vacation - myUsedVacation;
@@ -2744,7 +2866,7 @@
             if(myHistoryTbody) {
                 myHistoryTbody.innerHTML = '';
                 if(allMyLeaves.length === 0) {
-                    myHistoryTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
+                    myHistoryTbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
                 } else {
                     allMyLeaves.forEach(l => {
                         const days = getLeaveDaysVal(l);
@@ -2765,7 +2887,8 @@
                                 <td>${formatDateDisplay(l.endDate)}</td>
                                 <td class="fw-bold text-primary">${days} ${lang.txtDayUnit}</td>
                                 <td>${l.reason}</td>
-                                <td>${statusBadge}</td>
+                                <td>${leaveCreatedCell(l)}</td>
+                                <td>${statusBadge}${approvalInfo(l)}</td>
                                 <td>${userActionBtns}</td>
                             </tr>`;
                     });
@@ -2782,6 +2905,18 @@
         if(adminEmpName !== 'ALL') targetLeavesForTable = targetLeavesForTable.filter(l => String(l.empName).trim() === adminEmpName);
         if(adminYear !== 'ALL') targetLeavesForTable = targetLeavesForTable.filter(l => parseDateToISO(l.startDate).startsWith(adminYear));
         
+        const adminProfEl = document.getElementById('adminEmpProfile');
+        if (adminProfEl) {
+            if (adminEmpName !== 'ALL') {
+                const pEmp = emps.find(x => String(x.name).trim() === adminEmpName);
+                const pUser = users.find(x => String(x.fullName || '').trim() === adminEmpName);
+                const pYear = adminYear !== 'ALL' ? adminYear : String(new Date().getFullYear());
+                adminProfEl.innerHTML = empProfileCardHtml(pEmp, pUser, pYear, leaves, lang);
+            } else {
+                adminProfEl.innerHTML = '';
+            }
+        }
+
         const approvedAdminLeaves = targetLeavesForTable.filter(l => l.status === 'approved');
         let adminSick = 0, adminPersonal = 0, adminVac = 0;
         approvedAdminLeaves.forEach(l => {
@@ -2814,7 +2949,7 @@
         if(adminTbody) {
             adminTbody.innerHTML = '';
             if(targetLeavesForTable.length === 0) {
-                adminTbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
+                adminTbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
             } else {
                 targetLeavesForTable.forEach(l => {
                     const days = getLeaveDaysVal(l);
@@ -2839,7 +2974,8 @@
                             <td>${formatDateDisplay(l.endDate)}</td>
                             <td class="fw-bold text-primary">${days} ${lang.txtDayUnit}</td>
                             <td>${l.reason}</td>
-                            <td>${statusBadge}</td>
+                            <td>${leaveCreatedCell(l)}</td>
+                            <td>${statusBadge}${approvalInfo(l)}</td>
                             ${adminActionBtns}
                         </tr>`;
                 });
@@ -2851,6 +2987,143 @@
     Object.assign(translations.th, { lblEmpPhoto: "📷 เลือกรูปภาพ", lblEmpPass: "รหัสผ่าน", lblEmpRole: "สิทธิ์ใช้งาน", empAccountHint: "ไม่บังคับ — กรอก Username และรหัสผ่านเพื่อสร้างบัญชีเข้าสู่ระบบให้พนักงาน" });
     Object.assign(translations.en, { lblEmpPhoto: "📷 Choose Photo", lblEmpPass: "Password", lblEmpRole: "Role", empAccountHint: "Optional — fill in username and password to create a login account for this employee" });
     Object.assign(translations.mm, { lblEmpPhoto: "📷 ဓာတ်ပုံရွေးရန်", lblEmpPass: "စကားဝှက်", lblEmpRole: "ရာထူး", empAccountHint: "မဖြည့်လည်းရသည် — အကောင့်ဖွင့်ရန် Username နှင့် စကားဝှက်ကို ဖြည့်ပါ" });
+
+    Object.assign(translations.th, { lblEmpStart: "วันที่เริ่มงาน", lblEmpEnd: "วันที่ออกงาน (กรณีลาออก)", thEmpWork: "ช่วงเวลาทำงาน", thUpCreated: "บันทึกเมื่อ", thMyCreated: "บันทึกเมื่อ", thCreated: "บันทึกเมื่อ", txtApprovedAt: "อนุมัติเมื่อ", txtWorking: "ทำงานอยู่", txtResigned: "ลาออกแล้ว" });
+    Object.assign(translations.th, { btnOpenAddEmp: "เพิ่มพนักงาน", thUpApproved: "อนุมัติเมื่อ", txtTenure: "อายุงาน", txtYearUnit: "ปี", txtMonthUnit: "เดือน", txtPending: "รออนุมัติ (วัน)", thEmpQuota: "สรุปการลาปีนี้ (ใช้ไป/โควต้า)" });
+    Object.assign(translations.th, { lblRegPosition: "ตำแหน่งงาน / Position", lblProfPosition: "ตำแหน่งงาน", lblEmpPosition: "ตำแหน่งงาน", lblEmpBirth: "วันเกิด (ใช้คำนวณอายุ)", txtPosition: "ตำแหน่ง", txtDeptLbl: "ฝ่าย/แผนก", txtAge: "อายุ", txtQuotaYear: "โควต้าการลา ปี", txtUsed: "ใช้", txtRemain: "เหลือ" });
+    Object.assign(translations.en, { lblRegPosition: "Position", lblProfPosition: "Position", lblEmpPosition: "Position", lblEmpBirth: "Birth Date (for age)", txtPosition: "Position", txtDeptLbl: "Department", txtAge: "Age", txtQuotaYear: "Leave quota", txtUsed: "Used", txtRemain: "Left" });
+    Object.assign(translations.mm, { lblRegPosition: "ရာထူး", lblProfPosition: "ရာထူး", lblEmpPosition: "ရာထူး", lblEmpBirth: "မွေးသက္ကရာဇ် (အသက်တွက်ရန်)", txtPosition: "ရာထူး", txtDeptLbl: "ဌာန", txtAge: "အသက်", txtQuotaYear: "ခွင့်ရက် နှစ်", txtUsed: "သုံးပြီး", txtRemain: "ကျန်" });
+    Object.assign(translations.en, { btnOpenAddEmp: "Add Employee", thUpApproved: "Approved At", txtTenure: "Tenure", txtYearUnit: "yr", txtMonthUnit: "mo", txtPending: "Pending (days)", thEmpQuota: "Leave Summary This Year (Used/Quota)" });
+    Object.assign(translations.mm, { btnOpenAddEmp: "ဝန်ထမ်းထည့်ရန်", thUpApproved: "အတည်ပြုချိန်", txtTenure: "လုပ်သက်", txtYearUnit: "နှစ်", txtMonthUnit: "လ", txtPending: "စောင့်ဆိုင်းနေ (ရက်)", thEmpQuota: "ယခုနှစ် ခွင့်အနှစ်ချုပ် (သုံးပြီး/ခွင့်ရက်)" });
+    Object.assign(translations.en, { lblEmpStart: "Start Date", lblEmpEnd: "Resign Date (if resigned)", thEmpWork: "Employment Period", thUpCreated: "Submitted At", thMyCreated: "Submitted At", thCreated: "Submitted At", txtApprovedAt: "Approved at", txtWorking: "Active", txtResigned: "Resigned" });
+    Object.assign(translations.mm, { lblEmpStart: "အလုပ်စတင်သည့်ရက်", lblEmpEnd: "အလုပ်ထွက်သည့်ရက်", thEmpWork: "အလုပ်လုပ်ကိုင်ချိန်", thUpCreated: "တင်သည့်အချိန်", thMyCreated: "တင်သည့်အချိန်", thCreated: "တင်သည့်အချိန်", txtApprovedAt: "အတည်ပြုချိန်", txtWorking: "လုပ်ကိုင်နေဆဲ", txtResigned: "ထွက်ပြီး" });
+
+    function formatDateTime(v) {
+        if (!v) return '';
+        const d = new Date(v);
+        if (isNaN(d.getTime())) return String(v);
+        const p = n => String(n).padStart(2, '0');
+        return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+
+    function leaveCreatedCell(l) {
+        if (!l.createdAt) return '<span class="text-muted">-</span>';
+        let h = `<div class="small">${formatDateTime(l.createdAt)}</div>`;
+        if (l.updatedAt) h += `<div class="small text-muted">✏️ ${formatDateTime(l.updatedAt)}</div>`;
+        return h;
+    }
+
+    function approvalInfo(l) {
+        if (l.status !== 'approved' || !l.approvedAt) return '';
+        const lang = translations[currentLang] || translations.th;
+        return `<div class="small text-muted mt-1">${lang.txtApprovedAt}: ${formatDateTime(l.approvedAt)}${l.approvedBy ? '<br>' + l.approvedBy : ''}</div>`;
+    }
+
+    function getEmpPosition(user) {
+        if (!user) return '';
+        if (user.position) return user.position;
+        const emps = JSON.parse(localStorage.getItem('employees')) || [];
+        const e = emps.find(x => String(x.name || '').trim() === String(user.fullName || '').trim());
+        return (e && e.position) || '';
+    }
+
+    function ageText(emp, lang) {
+        if (!emp || !emp.birthDate) return '';
+        const b = parseDateToISO(emp.birthDate);
+        if (!b) return '';
+        const bp = b.split('-').map(Number), now = new Date();
+        let age = now.getFullYear() - bp[0];
+        if ((now.getMonth() + 1) < bp[1] || ((now.getMonth() + 1) === bp[1] && now.getDate() < bp[2])) age--;
+        return age >= 0 ? `${age} ${lang.txtYearUnit}` : '';
+    }
+
+    function empProfileCardHtml(emp, user, year, leaves, lang) {
+        const name = (emp && emp.name) || (user && user.fullName) || '';
+        if (!name) return '';
+        const avatar = (user && user.avatar) ? user.avatar : defaultAvatar;
+        const position = (emp && emp.position) || (user && user.position) || '';
+        const dept = (emp && emp.dept) || (user && user.dept) || '';
+        let q = emp ? emp.quota : null;
+        if (typeof q === 'string') { try { q = JSON.parse(q); } catch (err) { q = null; } }
+        if (!q || typeof q !== 'object') q = { sick: 30, personal: 6, vacation: 7 };
+        const u = empLeaveUsed(leaves, name, year);
+        const tenure = emp ? tenureText(emp, lang) : '';
+        const age = emp ? ageText(emp, lang) : '';
+        const row = (icon, label, val) => `<div class="small mb-1"><i class="fa-solid ${icon} text-muted me-2" style="width:16px"></i><span class="text-muted">${label}:</span> <span class="fw-semibold">${val || '-'}</span></div>`;
+        const qBadge = (cls, label, used, total) => `<div class="d-flex justify-content-between align-items-center border rounded-3 px-2 py-1 mb-1 ${cls}"><span class="small fw-semibold">${label}</span><span class="small">${lang.txtUsed} ${used}/${total} · <b>${lang.txtRemain} ${total - used}</b> ${lang.txtDayUnit}</span></div>`;
+        return `
+        <div class="card border-0 shadow-sm bg-body-tertiary mb-4"><div class="card-body p-3"><div class="row g-3 align-items-center">
+            <div class="col-lg-4 d-flex align-items-center gap-3">
+                <img src="${avatar}" alt="" class="rounded-circle border shadow-sm" style="width:84px;height:84px;object-fit:cover;">
+                <div>
+                    <h5 class="fw-bold mb-1">${name}</h5>
+                    ${position ? `<span class="badge bg-primary">${position}</span>` : `<span class="text-muted small">${lang.txtPosition}: -</span>`}
+                    <div class="small text-muted mt-1">${lang.txtDeptLbl}: ${dept || '-'}</div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                ${row('fa-briefcase', lang.txtTenure, tenure)}
+                ${row('fa-cake-candles', lang.txtAge, age)}
+                ${row('fa-calendar-check', lang.lblEmpStart, emp && emp.startDate ? formatDateDisplay(emp.startDate) : '')}
+            </div>
+            <div class="col-lg-5">
+                <div class="small fw-bold text-secondary mb-1">${lang.txtQuotaYear} ${year}</div>
+                ${qBadge('border-danger-subtle bg-danger-subtle', lang.optSick, u.sick, q.sick)}
+                ${qBadge('border-warning-subtle bg-warning-subtle', lang.optPersonal, u.personal, q.personal)}
+                ${qBadge('border-success-subtle bg-success-subtle', lang.optVacation, u.vacation, q.vacation)}
+            </div>
+        </div></div></div>`;
+    }
+
+    function tenureText(emp, lang) {
+        if (!emp.startDate) return '';
+        const sISO = parseDateToISO(emp.startDate);
+        if (!sISO) return '';
+        const eISO = emp.endDate ? parseDateToISO(emp.endDate) : new Date().toISOString().split('T')[0];
+        const sp = sISO.split('-').map(Number), ep = eISO.split('-').map(Number);
+        let y = ep[0] - sp[0], m = ep[1] - sp[1], d = ep[2] - sp[2];
+        if (y < 0 || (y === 0 && m < 0) || (y === 0 && m === 0 && d < 0)) return '';
+        if (d < 0) { m--; d += new Date(ep[0], ep[1] - 1, 0).getDate(); }
+        if (m < 0) { y--; m += 12; }
+        const parts = [];
+        if (y > 0) parts.push(`${y} ${lang.txtYearUnit}`);
+        if (m > 0) parts.push(`${m} ${lang.txtMonthUnit}`);
+        if (d > 0 || parts.length === 0) parts.push(`${d} ${lang.txtDayUnit}`);
+        return parts.join(' ');
+    }
+
+    function empLeaveUsed(leaves, empName, year) {
+        const r = { sick: 0, personal: 0, vacation: 0, pending: 0 };
+        const nm = String(empName || '').trim();
+        leaves.forEach(l => {
+            if (String(l.empName || '').trim() !== nm) return;
+            if (!String(parseDateToISO(l.startDate) || '').startsWith(year)) return;
+            const d = getLeaveDaysVal(l);
+            if (l.status === 'approved') {
+                if (l.leaveType === 'sick') r.sick += d;
+                else if (l.leaveType === 'vacation') r.vacation += d;
+                else r.personal += d;
+            } else {
+                r.pending += d;
+            }
+        });
+        return r;
+    }
+
+    function workPeriodHtml(emp, lang) {
+        const s = emp.startDate ? formatDateDisplay(emp.startDate) : '-';
+        const t = tenureText(emp, lang);
+        const tenure = t ? `<div class="small fw-semibold text-primary">${lang.txtTenure}: ${t}</div>` : '';
+        if (emp.endDate) {
+            return `<div class="small">${s} → ${formatDateDisplay(emp.endDate)}</div>${tenure}<span class="badge bg-secondary">${lang.txtResigned}</span>`;
+        }
+        return `<div class="small">${s}</div>${tenure}<span class="badge bg-success">${lang.txtWorking}</span>`;
+    }
+
+    function approvalCellHtml(l) {
+        if (l.status !== 'approved' || !l.approvedAt) return '<span class="text-muted">-</span>';
+        return `<div class="small">${formatDateTime(l.approvedAt)}</div>${l.approvedBy ? '<div class="small text-muted">' + l.approvedBy + '</div>' : ''}`;
+    }
 
     function toggleTheme() {
         var next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
