@@ -834,6 +834,11 @@
                     </div>
                     <div class="card-body p-4">
                         <form id="empForm">
+                            <div class="text-center mb-3">
+                                <img id="newEmpAvatarPreview" alt="Employee photo preview" class="profile-avatar-preview shadow-sm">
+                                <label for="newEmpImageInput" class="btn btn-outline-primary btn-sm rounded-pill" id="lblEmpPhoto">📷 เลือกรูปภาพ</label>
+                                <input type="file" id="newEmpImageInput" accept="image/*" class="d-none" onchange="previewNewEmpImage(event)">
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label text-secondary fw-semibold" id="lblEmpName">ชื่อ-นามสกุล</label>
                                 <input type="text" class="form-control" id="newEmpName" required>
@@ -845,6 +850,27 @@
                             <div class="mb-3">
                                 <label class="form-label text-secondary fw-semibold" id="lblEmpDept">แผนก</label>
                                 <input type="text" class="form-control" id="newEmpDept" required>
+                            </div>
+                            <div class="border-top pt-3 mt-4 mb-3">
+                                <div class="small text-muted mb-3" id="empAccountHint"><i class="fa-solid fa-key me-1"></i>ไม่บังคับ — กรอก Username และรหัสผ่านเพื่อสร้างบัญชีเข้าสู่ระบบให้พนักงาน</div>
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary fw-semibold" id="lblEmpUser">Username</label>
+                                    <input type="text" class="form-control" id="newEmpUsername" autocomplete="off">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary fw-semibold" id="lblEmpPass">รหัสผ่าน</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="newEmpPassword" autocomplete="new-password">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="toggleNewEmpPassword(this)" tabindex="-1" aria-label="Show or hide password"><i class="fa-solid fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-1">
+                                    <label class="form-label text-secondary fw-semibold" id="lblEmpRole">สิทธิ์ใช้งาน</label>
+                                    <select class="form-select" id="newEmpRole">
+                                        <option value="user" selected>User</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-info text-white w-100 shadow-sm" id="btnAddEmp">เพิ่มพนักงาน</button>
                         </form>
@@ -1586,20 +1612,125 @@
         if(pageId === 'employeeView') document.getElementById('menuEmployee').classList.add('active');
     }
 
+    // รูปพนักงานใหม่ (ที่ Admin เลือกในฟอร์มเพิ่มพนักงาน)
+    let newEmpAvatarBase64 = null;
+
+    function resizeImageToBase64(file, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const MAX_WIDTH = 150;
+                const MAX_HEIGHT = 150;
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', 0.7));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function previewNewEmpImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        resizeImageToBase64(file, function(dataUrl) {
+            newEmpAvatarBase64 = dataUrl;
+            document.getElementById('newEmpAvatarPreview').src = dataUrl;
+        });
+    }
+
+    function resetNewEmpForm() {
+        newEmpAvatarBase64 = null;
+        document.getElementById('newEmpAvatarPreview').src = defaultAvatar;
+        document.getElementById('newEmpImageInput').value = '';
+        const pw = document.getElementById('newEmpPassword');
+        pw.type = 'password';
+        const eye = pw.parentElement.querySelector('i');
+        if (eye) eye.className = 'fa-solid fa-eye';
+    }
+
+    function toggleNewEmpPassword(btn) {
+        const pw = document.getElementById('newEmpPassword');
+        const show = pw.type === 'password';
+        pw.type = show ? 'text' : 'password';
+        btn.querySelector('i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    }
+
+    document.getElementById('newEmpAvatarPreview').src = defaultAvatar;
+
     document.getElementById('empForm').addEventListener('submit', function(e) {
         e.preventDefault();
+        if (!currentUser || currentUser.role !== 'admin') {
+            playAudioNotification('error');
+            alert('เฉพาะ Admin เท่านั้น / Admin only');
+            return;
+        }
+
+        const name = document.getElementById('newEmpName').value.trim();
+        const phone = formatPhoneNumber(document.getElementById('newEmpPhone').value.trim());
+        const dept = document.getElementById('newEmpDept').value.trim();
+        const username = document.getElementById('newEmpUsername').value.trim();
+        const password = document.getElementById('newEmpPassword').value.trim();
+        const role = document.getElementById('newEmpRole').value === 'admin' ? 'admin' : 'user';
+        const wantsAccount = username !== '' || password !== '';
+
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+
+        if (wantsAccount) {
+            if (username === '' || password === '') {
+                playAudioNotification('error');
+                alert('กรุณากรอก Username และรหัสผ่านให้ครบทั้งสองช่อง / Please fill in both username and password');
+                return;
+            }
+            if (users.some(u => String(u.username || '').trim().toLowerCase() === username.toLowerCase())) {
+                playAudioNotification('error');
+                alert('Username นี้ถูกใช้งานแล้ว / Username already exists');
+                return;
+            }
+            if (users.some(u => String(u.fullName || '').trim() === name)) {
+                playAudioNotification('error');
+                alert('มีบัญชีผู้ใช้ที่ใช้ชื่อ-นามสกุลนี้แล้ว / An account with this full name already exists');
+                return;
+            }
+        }
+
         let emps = JSON.parse(localStorage.getItem('employees')) || [];
-        emps.push({ 
-            id: Date.now(), 
-            name: document.getElementById('newEmpName').value.trim(), 
-            phone: formatPhoneNumber(document.getElementById('newEmpPhone').value.trim()), 
-            dept: document.getElementById('newEmpDept').value.trim(),
+        emps.push({
+            id: Date.now(),
+            name: name,
+            phone: phone,
+            dept: dept,
             quota: { sick: 30, personal: 6, vacation: 7 }
         });
         localStorage.setItem('employees', JSON.stringify(emps));
+
+        if (wantsAccount) {
+            users.push({
+                username: String(username),
+                password: String(password),
+                fullName: name,
+                phone: phone,
+                dept: dept,
+                role: role,
+                avatar: newEmpAvatarBase64 || defaultAvatar
+            });
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
         syncToCloud();
         playAudioNotification('success');
         this.reset();
+        resetNewEmpForm();
         loadEmployees();
     });
 
@@ -1777,7 +1908,12 @@
 
                 tbody.innerHTML += `
                     <tr>
-                        <td class="fw-bold">${emp.name}</td>
+                        <td class="fw-bold">
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <img src="${(userAcc && userAcc.avatar) ? userAcc.avatar : defaultAvatar}" alt="" class="table-avatar">
+                                <span>${emp.name}</span>
+                            </div>
+                        </td>
                         <td>${usernameDisplay}</td>
                         <td>${phoneDisplay}</td>
                         <td>${quotaDisplay}</td>
@@ -2375,6 +2511,10 @@
     }
 </script>
 <script>
+    Object.assign(translations.th, { lblEmpPhoto: "📷 เลือกรูปภาพ", lblEmpPass: "รหัสผ่าน", lblEmpRole: "สิทธิ์ใช้งาน", empAccountHint: "ไม่บังคับ — กรอก Username และรหัสผ่านเพื่อสร้างบัญชีเข้าสู่ระบบให้พนักงาน" });
+    Object.assign(translations.en, { lblEmpPhoto: "📷 Choose Photo", lblEmpPass: "Password", lblEmpRole: "Role", empAccountHint: "Optional — fill in username and password to create a login account for this employee" });
+    Object.assign(translations.mm, { lblEmpPhoto: "📷 ဓာတ်ပုံရွေးရန်", lblEmpPass: "စကားဝှက်", lblEmpRole: "ရာထူး", empAccountHint: "မဖြည့်လည်းရသည် — အကောင့်ဖွင့်ရန် Username နှင့် စကားဝှက်ကို ဖြည့်ပါ" });
+
     function toggleTheme() {
         var next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-bs-theme', next);
