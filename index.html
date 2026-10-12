@@ -906,6 +906,81 @@
 
 </div>
 
+<!-- Pop-up แก้ไขข้อมูลพนักงาน (Admin) -->
+<div class="modal fade" id="empEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <form id="empEditForm" class="modal-content" style="border: 0; border-radius: 20px; overflow: hidden;">
+            <div class="modal-header card-header-emp text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-pen me-2"></i>แก้ไขข้อมูลพนักงาน / Edit Employee</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <img id="editEmpAvatarPreview" alt="" class="profile-avatar-preview shadow-sm">
+                        <div class="d-grid gap-2 mt-2">
+                            <label for="editEmpImageInput" class="btn btn-outline-primary btn-sm rounded-pill mb-0">📷 เปลี่ยนรูป / Change photo</label>
+                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="clearEditEmpImage()">ใช้รูปเริ่มต้น / Default</button>
+                        </div>
+                        <input type="file" id="editEmpImageInput" accept="image/*" class="d-none" onchange="previewEditEmpImage(event)">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label text-secondary fw-semibold">ชื่อ-นามสกุล / Full Name</label>
+                                <input type="text" class="form-control" id="editEmpName" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-secondary fw-semibold">เบอร์โทรศัพท์ / Phone</label>
+                                <input type="tel" class="form-control" id="editEmpPhone">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-secondary fw-semibold">แผนก / Department</label>
+                                <input type="text" class="form-control" id="editEmpDept">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-secondary fw-semibold">โควต้าวันลา / Leave Quota (ป่วย / กิจ / พักร้อน)</label>
+                                <div class="row g-2">
+                                    <div class="col-4"><input type="number" min="0" class="form-control" id="editQuotaSick" aria-label="Sick"></div>
+                                    <div class="col-4"><input type="number" min="0" class="form-control" id="editQuotaPersonal" aria-label="Personal"></div>
+                                    <div class="col-4"><input type="number" min="0" class="form-control" id="editQuotaVacation" aria-label="Vacation"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-top pt-3 mt-4">
+                            <div class="small text-muted mb-3" id="editEmpAccountHint"></div>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label text-secondary fw-semibold">Username</label>
+                                    <input type="text" class="form-control" id="editEmpUsername" autocomplete="off">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label text-secondary fw-semibold">รหัสผ่านใหม่ / New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="editEmpPassword" autocomplete="new-password">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePwField(this, 'editEmpPassword')" tabindex="-1" aria-label="Show or hide password"><i class="fa-solid fa-eye" id="editEmpPwEye"></i></button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label text-secondary fw-semibold">สิทธิ์ใช้งาน / Role</label>
+                                    <select class="form-select" id="editEmpRole">
+                                        <option value="user">User</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">ยกเลิก / Cancel</button>
+                <button type="submit" class="btn btn-primary px-4"><i class="fa-solid fa-floppy-disk me-1"></i> บันทึก / Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -1067,6 +1142,7 @@
                     localStorage.setItem('employees', JSON.stringify(formattedEmps));
                 }
 
+                takeCloudSnapshot();
                 loadEmployees();
                 loadLeaves();
             }
@@ -1077,27 +1153,109 @@
         }
     }
 
-    async function syncToCloud() {
-        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return;
+    // ===== Sync แบบส่งเฉพาะส่วนที่เปลี่ยน (ป้องกันข้อมูลทับกันเมื่อใช้งานพร้อมกัน) =====
+    function genId() {
+        return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    const SYNC_COLLECTIONS = {
+        leaves:           { ls: 'leaveData',        key: o => String(o.id || '') },
+        saturdayHolidays: { ls: 'saturdayHolidays', key: o => String(o.id || '') },
+        companyHolidays:  { ls: 'companyHolidays',  key: o => String(o.id || '') },
+        employees:        { ls: 'employees',        key: o => String(o.id || '') },
+        users:            { ls: 'users',            key: o => String(o.username || '').trim().toLowerCase() }
+    };
+    let cloudSnapshot = null;
+    let syncQueued = 0;
+    let syncChain = Promise.resolve();
+    let syncWarned = false;
+
+    function readLocalCollection(name) {
+        try { return JSON.parse(localStorage.getItem(SYNC_COLLECTIONS[name].ls)) || []; } catch (e) { return []; }
+    }
+
+    function takeCloudSnapshot() {
+        cloudSnapshot = {};
+        Object.keys(SYNC_COLLECTIONS).forEach(name => {
+            const m = {};
+            readLocalCollection(name).forEach(o => {
+                const k = SYNC_COLLECTIONS[name].key(o);
+                if (k) m[k] = JSON.stringify(o);
+            });
+            cloudSnapshot[name] = m;
+        });
+    }
+
+    function computeChanges() {
+        const changes = {};
+        let count = 0;
+        Object.keys(SYNC_COLLECTIONS).forEach(name => {
+            const snap = (cloudSnapshot && cloudSnapshot[name]) || {};
+            const cur = {};
+            readLocalCollection(name).forEach(o => {
+                const k = SYNC_COLLECTIONS[name].key(o);
+                if (k) cur[k] = o;
+            });
+            const upsert = [], del = [];
+            Object.keys(cur).forEach(k => { if (snap[k] !== JSON.stringify(cur[k])) upsert.push(cur[k]); });
+            Object.keys(snap).forEach(k => { if (!(k in cur)) del.push(k); });
+            if (upsert.length || del.length) {
+                changes[name] = { upsert: upsert, delete: del };
+                count += upsert.length + del.length;
+            }
+        });
+        return { changes, count };
+    }
+
+    function syncToCloud() {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("วาง_WEB_APP_URL")) return Promise.resolve();
+        syncQueued++;
+        syncChain = syncChain.then(runSyncToCloud, runSyncToCloud);
+        return syncChain;
+    }
+
+    async function runSyncToCloud() {
         showSyncSpinner(true);
         try {
-            const leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
-            const saturdayHolidays = JSON.parse(localStorage.getItem('saturdayHolidays')) || [];
-            const companyHolidays = JSON.parse(localStorage.getItem('companyHolidays')) || [];
-            const employees = JSON.parse(localStorage.getItem('employees')) || [];
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'syncData', leaves, saturdayHolidays, companyHolidays, employees, users })
-            });
+            const { changes, count } = computeChanges();
+            if (count > 0) {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'applyChanges', changes })
+                });
+                let result = null;
+                try { result = await res.json(); } catch (e) {}
+                if (!result || result.ok !== true) {
+                    throw new Error((result && result.error) || 'Apps Script ไม่ตอบกลับ (ต้องอัปเดต Code.gs เป็นเวอร์ชันใหม่)');
+                }
+            }
+            syncWarned = false;
         } catch (e) {
             console.error("Cloud Sync Error:", e);
-        } finally {
+            syncQueued--;
             showSyncSpinner(false);
+            if (!syncWarned) {
+                syncWarned = true;
+                alert('บันทึกขึ้น Google Sheet ไม่สำเร็จ / Could not save to Google Sheet:\n' + e.message);
+            }
+            return;
         }
+        syncQueued--;
+        // ดึงข้อมูลล่าสุดกลับมา (รวมรายการที่คนอื่นเพิ่มพร้อมกัน) เมื่อคิวบันทึกหมดแล้ว
+        if (syncQueued === 0) await fetchCloudData();
+        else showSyncSpinner(false);
     }
+
+    // รีเฟรชข้อมูลอัตโนมัติ เพื่อให้ทุกคนเห็นรายการล่าสุด
+    setInterval(() => {
+        if (!currentUser || document.hidden || syncQueued > 0) return;
+        if (computeChanges().count > 0) return;
+        fetchCloudData();
+    }, 45000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && currentUser && syncQueued === 0 && computeChanges().count === 0) fetchCloudData();
+    });
 
     function playAudioNotification(type) {
         try {
@@ -1373,7 +1531,7 @@
 
             let emps = JSON.parse(localStorage.getItem('employees')) || [];
             if (!emps.some(e => String(e.name || '').trim() === 'Nattapons (WH Pantai Admin)')) {
-                emps.push({ id: Date.now(), name: 'Nattapons (WH Pantai Admin)', phone: '0800000000', dept: 'WH Pantai', quota: { sick: 30, personal: 6, vacation: 7 } });
+                emps.push({ id: genId(), name: 'Nattapons (WH Pantai Admin)', phone: '0800000000', dept: 'WH Pantai', quota: { sick: 30, personal: 6, vacation: 7 } });
                 localStorage.setItem('employees', JSON.stringify(emps));
             }
         }
@@ -1398,7 +1556,7 @@
         localStorage.setItem('users', JSON.stringify(users));
 
         let emps = JSON.parse(localStorage.getItem('employees')) || [];
-        emps.push({ id: Date.now(), name: fullName, phone: phone, dept: dept, quota: { sick: 30, personal: 6, vacation: 7 } });
+        emps.push({ id: genId(), name: fullName, phone: phone, dept: dept, quota: { sick: 30, personal: 6, vacation: 7 } });
         localStorage.setItem('employees', JSON.stringify(emps));
 
         syncToCloud();
@@ -1706,7 +1864,7 @@
 
         let emps = JSON.parse(localStorage.getItem('employees')) || [];
         emps.push({
-            id: Date.now(),
+            id: genId(),
             name: name,
             phone: phone,
             dept: dept,
@@ -1734,16 +1892,194 @@
         loadEmployees();
     });
 
-    async function deleteEmployee(id) {
-        if (confirm('คุณต้องการลบรายชื่อพนักงานนี้ใช่หรือไม่?')) {
-            let emps = JSON.parse(localStorage.getItem('employees')) || [];
-            emps = emps.filter(emp => String(emp.id) !== String(id));
-            localStorage.setItem('employees', JSON.stringify(emps));
-            
-            await syncToCloud();
-            playAudioNotification('success');
-            loadEmployees();
+    // ===== Admin: แก้ไขข้อมูลพนักงาน/บัญชีผู้ใช้ทั้งหมด =====
+    let editingEmpId = null;
+    let editEmpAvatar = null;
+    let editEmpModalInstance = null;
+
+    function togglePwField(btn, inputId) {
+        const pw = document.getElementById(inputId);
+        const show = pw.type === 'password';
+        pw.type = show ? 'text' : 'password';
+        btn.querySelector('i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    }
+
+    function findAccountOfEmployee(emp, users) {
+        return users.find(u => String(u.fullName || '').trim() === String(emp.name || '').trim());
+    }
+
+    function openEditEmployee(id) {
+        if (!currentUser || currentUser.role !== 'admin') {
+            playAudioNotification('error');
+            alert('เฉพาะ Admin เท่านั้น / Admin only');
+            return;
         }
+        const emps = JSON.parse(localStorage.getItem('employees')) || [];
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const emp = emps.find(e => String(e.id) === String(id));
+        if (!emp) return;
+        const acc = findAccountOfEmployee(emp, users);
+        let q = emp.quota;
+        if (typeof q === 'string') { try { q = JSON.parse(q); } catch (err) { q = null; } }
+        if (!q || typeof q !== 'object') q = { sick: 30, personal: 6, vacation: 7 };
+
+        editingEmpId = emp.id;
+        editEmpAvatar = null;
+        document.getElementById('editEmpName').value = emp.name || '';
+        document.getElementById('editEmpPhone').value = formatPhoneNumber(emp.phone) === '-' ? '' : formatPhoneNumber(emp.phone);
+        document.getElementById('editEmpDept').value = emp.dept || '';
+        document.getElementById('editQuotaSick').value = q.sick;
+        document.getElementById('editQuotaPersonal').value = q.personal;
+        document.getElementById('editQuotaVacation').value = q.vacation;
+        document.getElementById('editEmpAvatarPreview').src = (acc && acc.avatar) ? acc.avatar : defaultAvatar;
+        document.getElementById('editEmpImageInput').value = '';
+
+        const pw = document.getElementById('editEmpPassword');
+        pw.value = ''; pw.type = 'password';
+        document.getElementById('editEmpPwEye').className = 'fa-solid fa-eye';
+        document.getElementById('editEmpUsername').value = acc ? acc.username : '';
+        document.getElementById('editEmpRole').value = acc && acc.role === 'admin' ? 'admin' : 'user';
+        const isSelf = !!(acc && currentUser && String(acc.username).toLowerCase() === String(currentUser.username).toLowerCase());
+        document.getElementById('editEmpRole').disabled = isSelf;
+        document.getElementById('editEmpAccountHint').innerHTML = acc
+            ? '<i class="fa-solid fa-circle-check text-success me-1"></i>มีบัญชีเข้าสู่ระบบแล้ว — เว้นรหัสผ่านว่างไว้ถ้าไม่ต้องการเปลี่ยน' + (isSelf ? ' (ไม่สามารถลดสิทธิ์บัญชีของตัวเองได้)' : '')
+            : '<i class="fa-solid fa-circle-info text-primary me-1"></i>ยังไม่มีบัญชีเข้าสู่ระบบ — กรอก Username และรหัสผ่านเพื่อสร้างบัญชี หรือเว้นว่างไว้';
+
+        if (!editEmpModalInstance) editEmpModalInstance = new bootstrap.Modal(document.getElementById('empEditModal'));
+        editEmpModalInstance.show();
+    }
+
+    function previewEditEmpImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        resizeImageToBase64(file, function(dataUrl) {
+            editEmpAvatar = dataUrl;
+            document.getElementById('editEmpAvatarPreview').src = dataUrl;
+        });
+    }
+
+    function clearEditEmpImage() {
+        editEmpAvatar = defaultAvatar;
+        document.getElementById('editEmpAvatarPreview').src = defaultAvatar;
+        document.getElementById('editEmpImageInput').value = '';
+    }
+
+    document.getElementById('empEditForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!currentUser || currentUser.role !== 'admin') return;
+
+        let emps = JSON.parse(localStorage.getItem('employees')) || [];
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        const empIdx = emps.findIndex(x => String(x.id) === String(editingEmpId));
+        if (empIdx === -1) { alert('ไม่พบรายชื่อพนักงานนี้ (อาจถูกลบไปแล้ว)'); return; }
+
+        const oldName = String(emps[empIdx].name || '').trim();
+        const accIdx = users.findIndex(u => String(u.fullName || '').trim() === oldName);
+
+        const name = document.getElementById('editEmpName').value.trim();
+        const phone = formatPhoneNumber(document.getElementById('editEmpPhone').value.trim());
+        const dept = document.getElementById('editEmpDept').value.trim();
+        const username = document.getElementById('editEmpUsername').value.trim();
+        const password = document.getElementById('editEmpPassword').value.trim();
+        const role = document.getElementById('editEmpRole').value === 'admin' ? 'admin' : 'user';
+        const fail = (msg) => { playAudioNotification('error'); alert(msg); };
+
+        if (name === '') return fail('กรุณากรอกชื่อ-นามสกุล');
+        if (emps.some((x, i) => i !== empIdx && String(x.name || '').trim() === name)) return fail('มีพนักงานชื่อนี้อยู่แล้ว / Name already exists');
+        if (users.some((u, i) => i !== accIdx && String(u.fullName || '').trim() === name)) return fail('มีบัญชีผู้ใช้ที่ใช้ชื่อ-นามสกุลนี้แล้ว / Name already used by another account');
+
+        if (accIdx !== -1) {
+            if (username === '') return fail('Username ห้ามว่าง / Username is required');
+            if (users.some((u, i) => i !== accIdx && String(u.username || '').trim().toLowerCase() === username.toLowerCase())) return fail('Username นี้ถูกใช้งานแล้ว / Username already exists');
+        } else if (username !== '' || password !== '') {
+            if (username === '' || password === '') return fail('กรุณากรอก Username และรหัสผ่านให้ครบทั้งสองช่อง');
+            if (users.some(u => String(u.username || '').trim().toLowerCase() === username.toLowerCase())) return fail('Username นี้ถูกใช้งานแล้ว / Username already exists');
+        }
+
+        const oldQuota = (emps[empIdx].quota && typeof emps[empIdx].quota === 'object') ? emps[empIdx].quota : { sick: 30, personal: 6, vacation: 7 };
+        const readQ = (id, fallback) => { const v = parseInt(document.getElementById(id).value, 10); return (isNaN(v) || v < 0) ? fallback : v; };
+        emps[empIdx].name = name;
+        emps[empIdx].phone = phone;
+        emps[empIdx].dept = dept;
+        emps[empIdx].quota = {
+            sick: readQ('editQuotaSick', oldQuota.sick),
+            personal: readQ('editQuotaPersonal', oldQuota.personal),
+            vacation: readQ('editQuotaVacation', oldQuota.vacation)
+        };
+
+        let touchedUser = null;
+        const oldUsername = accIdx !== -1 ? users[accIdx].username : null;
+        if (accIdx !== -1) {
+            const u = users[accIdx];
+            u.username = username;
+            u.fullName = name;
+            u.phone = phone;
+            u.dept = dept;
+            if (!document.getElementById('editEmpRole').disabled) u.role = role;
+            if (password !== '') u.password = password;
+            if (editEmpAvatar) u.avatar = editEmpAvatar;
+            touchedUser = u;
+        } else if (username !== '') {
+            touchedUser = { username: username, password: password, fullName: name, phone: phone, dept: dept, role: role, avatar: editEmpAvatar || defaultAvatar };
+            users.push(touchedUser);
+        }
+
+        if (oldName !== name) {
+            let leaves = JSON.parse(localStorage.getItem('leaveData')) || [];
+            leaves.forEach(l => { if (String(l.empName || '').trim() === oldName) l.empName = name; });
+            localStorage.setItem('leaveData', JSON.stringify(leaves));
+        }
+        localStorage.setItem('employees', JSON.stringify(emps));
+        localStorage.setItem('users', JSON.stringify(users));
+
+        if (touchedUser && currentUser && oldUsername && String(oldUsername).toLowerCase() === String(currentUser.username).toLowerCase()) {
+            currentUser = touchedUser;
+            const av = currentUser.avatar || defaultAvatar;
+            document.getElementById('currentUserNameDisplay').innerText = `(${currentUser.fullName})`;
+            document.getElementById('navAvatar').src = av;
+            document.getElementById('profAvatarPreview').src = av;
+            document.getElementById('formUserAvatar').src = av;
+            document.getElementById('mySummaryUserAvatar').src = av;
+            document.getElementById('mySummaryUserDisplay').innerText = currentUser.fullName;
+            document.getElementById('formUserDisplayName').value = `${currentUser.fullName} (${currentUser.dept || 'WH Pantai'})`;
+            document.getElementById('satUserDisplayName').value = `${currentUser.fullName} (${currentUser.dept || 'Admin'})`;
+            document.getElementById('profUsername').value = currentUser.username;
+            document.getElementById('profFullName').value = currentUser.fullName;
+            document.getElementById('profPhone').value = formatPhoneNumber(currentUser.phone);
+            document.getElementById('profDept').value = currentUser.dept;
+        }
+
+        syncToCloud();
+        playAudioNotification('success');
+        if (editEmpModalInstance) editEmpModalInstance.hide();
+        loadEmployees();
+        loadLeaves();
+    });
+
+    async function deleteEmployee(id) {
+        let emps = JSON.parse(localStorage.getItem('employees')) || [];
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        const emp = emps.find(x => String(x.id) === String(id));
+        if (!emp) return;
+        const acc = findAccountOfEmployee(emp, users);
+        if (acc && currentUser && String(acc.username).toLowerCase() === String(currentUser.username).toLowerCase()) {
+            playAudioNotification('error');
+            alert('ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้ / You cannot delete your own account');
+            return;
+        }
+        const msg = acc
+            ? `ลบพนักงาน "${emp.name}" และบัญชีผู้ใช้ "${acc.username}" ใช่หรือไม่?\n(ประวัติการลาเดิมจะยังอยู่)`
+            : 'คุณต้องการลบรายชื่อพนักงานนี้ใช่หรือไม่?';
+        if (!confirm(msg)) return;
+        emps = emps.filter(x => String(x.id) !== String(id));
+        localStorage.setItem('employees', JSON.stringify(emps));
+        if (acc) {
+            users = users.filter(u => u !== acc && String(u.username || '').toLowerCase() !== String(acc.username).toLowerCase());
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+        await syncToCloud();
+        playAudioNotification('success');
+        loadEmployees();
     }
 
     function changeUserRole(username, newRole) {
@@ -1901,6 +2237,7 @@
                 }
 
                 if (currentUser && currentUser.role === 'admin') {
+                    actionBtnsHtml = `<button class="btn btn-primary btn-sm me-1" onclick="openEditEmployee('${emp.id}')">✏️ ${lang.editBtn}</button>` + actionBtnsHtml;
                     actionBtnsHtml += `<button class="btn btn-info text-white btn-sm me-1" onclick="editEmployeeQuota('${emp.id}')">${lang.setQuotaBtn}</button>`;
                 }
 
@@ -1972,7 +2309,7 @@
             alert('แก้ไขรายการวันลาเรียบร้อยแล้ว!');
         } else {
             leaves.push({
-                id: Date.now(),
+                id: genId(),
                 empName: empName,
                 leaveType: document.getElementById('leaveType').value,
                 startDate: parseDateToISO(startRaw),
@@ -2077,7 +2414,7 @@
             alert('แก้ไขรายการวันหยุดเสาร์เรียบร้อยแล้ว!');
         } else {
             satHolidays.push({
-                id: Date.now(),
+                id: genId(),
                 startDate: parseDateToISO(startRaw),
                 endDate: parseDateToISO(endRaw),
                 days: daysInput,
@@ -2178,7 +2515,7 @@
             alert('แก้ไขวันหยุดบริษัทเรียบร้อยแล้ว!');
         } else {
             compHolidays.push({
-                id: Date.now(),
+                id: genId(),
                 title: title,
                 startDate: parseDateToISO(startRaw),
                 endDate: parseDateToISO(endRaw),
