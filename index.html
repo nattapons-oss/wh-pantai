@@ -285,6 +285,182 @@
         [data-bs-theme="dark"] .flatpickr-day.inRange { background: #272f52; border-color: #272f52; box-shadow: -5px 0 0 #272f52, 5px 0 0 #272f52; }
     </style>
 <style>.bg-orange{background-color:#fd7e14!important}</style>
+<style id="vibrant-theme">
+/* =====================================================================
+   GREEN THEME — โทนเขียวเข้ม / เขียวอ่อน / ขาว (อ้างอิงเว็บ Winner's)
+   ปรับสีหลักได้ที่ตัวแปรชุดนี้ที่เดียว
+   ===================================================================== */
+:root {
+    --g-dark:#1f7a1a;  --g-dark2:#17630f;  --g-mid:#72aa2d;  --g-light:#a6cf4a;
+    --g-lime:#cde654;  --g-yellow:#f2fc4a; --g-pale:#eef7e0; --g-paler:#f6fbef;
+    --grad-nav:   linear-gradient(135deg,#17630f 0%,#23841f 100%);
+    --grad-dark:  linear-gradient(120deg,#17630f 0%,#2f9226 100%);
+    --grad-mid:   linear-gradient(120deg,#2f8a1f 0%,#72aa2d 100%);
+    --grad-light: linear-gradient(120deg,#4f9f26 0%,#a6cf4a 100%);
+    --grad-deep:  linear-gradient(120deg,#0f4d0b 0%,#2a8a24 100%);
+    --grad-teal:  linear-gradient(120deg,#13721f 0%,#2fb08a 100%);
+    --bs-primary:#2a8a1f; --bs-primary-rgb:42,138,31;
+    --bs-link-color:#237a1b; --bs-link-hover-color:#17630f;
+    --bs-primary-bg-subtle:#e6f4d5; --bs-primary-border-subtle:#c3e08f; --bs-primary-text-emphasis:#1b5a14;
+    --bs-success-bg-subtle:#e6f4d5; --bs-success-border-subtle:#c3e08f; --bs-success-text-emphasis:#1b5a14;
+    --radius: 20px; --radius-sm: 12px;
+    --shadow-sm: 0 2px 6px rgba(31,122,26,.07), 0 10px 28px rgba(31,122,26,.10);
+    --shadow-md: 0 4px 10px rgba(31,122,26,.10), 0 18px 44px rgba(23,99,15,.20);
+}
+
+/* ---------- พื้นหลัง: แถบเขียวอ่อนด้านบน + ขาวนวล ---------- */
+body {
+    background: linear-gradient(180deg,#72aa2d 0,#72aa2d 170px,#f3f9ea 170px,#ffffff 100%) no-repeat !important;
+    background-attachment: scroll !important; min-height: 100vh;
+}
+body::before, body::after {
+    content:""; position: fixed; z-index: -1; pointer-events: none; border-radius: 50%; filter: blur(70px); opacity:.35;
+    animation: floaty 18s ease-in-out infinite alternate;
+}
+body::before { width: 420px; height: 420px; left: -120px; top: 30vh; background: radial-gradient(circle,#cde654,transparent 70%); }
+body::after  { width: 480px; height: 480px; right: -140px; bottom: -80px; background: radial-gradient(circle,#a6cf4a,transparent 70%); animation-duration: 22s; }
+@keyframes floaty { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,-30px) scale(1.12); } }
+
+/* ---------- Login / สมัครสมาชิก ---------- */
+body:has(#mainNav.d-none) {
+    background: linear-gradient(135deg,#0f4d0b,#1f7a1a,#72aa2d,#a6cf4a,#1f7a1a,#0f4d0b) !important;
+    background-size: 400% 400% !important; animation: gradShift 24s ease infinite;
+}
+@keyframes gradShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+body:has(#mainNav.d-none)::before { background: radial-gradient(circle,rgba(255,255,255,.55),transparent 70%); }
+body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,252,74,.45),transparent 70%); }
+.auth-box {
+    background: rgba(255,255,255,.96) !important; backdrop-filter: blur(14px);
+    box-shadow: 0 30px 80px rgba(10,50,8,.45), 0 0 0 6px rgba(205,230,84,.55) !important;
+    border-radius: 28px !important; margin-top: 7vh !important;
+}
+.auth-box .card-header { padding-top: 2.4rem !important; }
+.auth-box .brand-logo { box-shadow: 0 10px 30px rgba(0,0,0,.28); animation: popIn .6s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes popIn { from { opacity: 0; transform: scale(.85) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.auth-box .btn-lg { padding: .85rem 1.2rem; font-size: 1.02rem !important; }
+
+/* ---------- เมนูด้านบน: เขียวเข้ม + เส้นขาว + ตัวอักษรเหลืองมะนาว ---------- */
+#mainNav {
+    background: var(--grad-nav) !important;
+    border-bottom: 6px solid #fff;
+    box-shadow: 0 8px 26px rgba(23,99,15,.35) !important;
+}
+#mainNav .nav-link { color: rgba(255,255,255,.92); }
+#mainNav .nav-link:hover { background: rgba(255,255,255,.14); color: #fff; }
+#mainNav .nav-link.active { background: rgba(255,255,255,.14); color: var(--g-yellow); font-weight: 700; box-shadow: inset 0 -3px 0 var(--g-yellow); border-radius: 12px 12px 6px 6px; }
+#mainNav .btn-outline-info { color:#fff; border-color: rgba(255,255,255,.5); }
+#mainNav .btn-outline-info:hover { background: rgba(205,230,84,.25); border-color: var(--g-lime); }
+#mainNav .btn-danger { background: linear-gradient(135deg,#f87171,#dc2626) !important; }
+#mainNav .nav-avatar { box-shadow: 0 0 0 3px var(--g-lime); border-color:#fff; }
+#mainNav .badge.bg-warning { background: var(--g-yellow) !important; color:#2b4a06 !important; }
+
+/* ---------- หัวการ์ด: เขียวไล่เฉด + หัวข้อสีเหลืองมะนาว ---------- */
+.card { border: 0 !important; box-shadow: var(--shadow-sm); }
+.card-header-dashboard { background: var(--grad-dark)  !important; }
+.card-header-form      { background: var(--grad-mid)   !important; }
+.card-header-summary   { background: var(--grad-light) !important; }
+.card-header-admin     { background: var(--grad-deep)  !important; }
+.card-header-emp       { background: var(--grad-teal)  !important; }
+.card-header-profile   { background: var(--grad-dark)  !important; }
+.card-header::after { width: 220px; height: 220px; right: -60px; top: -90px; background: rgba(205,230,84,.18); }
+.card-header::before { content:""; position:absolute; left:-30px; bottom:-70px; width:150px; height:150px; border-radius:50%; background: rgba(255,255,255,.08); pointer-events:none; }
+.card-header h4, .card-header h5, .offcanvas-header h5, .modal-header h5 { color: var(--g-yellow) !important; font-weight: 800 !important; text-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.page-section.active > .card, .page-section.active > div > .card { animation: popUp .5s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes popUp { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* ---------- การ์ดสถิติ ---------- */
+.stat-card { border-radius: 22px; box-shadow: 0 10px 26px rgba(23,99,15,.18) !important; overflow: hidden; }
+.stat-card::before { content:""; position:absolute; left:-30px; top:-40px; width:100px; height:100px; border-radius:50%; background: rgba(255,255,255,.14); }
+.stat-card:hover { transform: translateY(-6px) scale(1.015); }
+.stat-card h2 { font-size: 1.8rem; font-weight: 800 !important; text-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.stat-card.bg-primary { background: linear-gradient(135deg,#17630f,#3f9a2a) !important; }
+.stat-card.bg-danger  { background: linear-gradient(135deg,#dc2626,#fb923c) !important; }
+.stat-card.bg-warning { background: linear-gradient(135deg,#e9f23a,#cde654) !important; color:#2b4a06 !important; }
+.stat-card.bg-success { background: linear-gradient(135deg,#4f9f26,#a6cf4a) !important; }
+.stat-card.bg-info    { background: linear-gradient(135deg,#0f766e,#2fb08a) !important; color:#fff !important; }
+
+/* ---------- ปุ่ม ---------- */
+.btn { border-radius: 14px; }
+.btn:focus-visible { box-shadow: 0 0 0 4px rgba(114,170,45,.35) !important; }
+.btn-primary { background: linear-gradient(135deg,#1f7a1a,#4aa02c) !important; border: 0 !important; box-shadow: 0 8px 20px rgba(31,122,26,.35); }
+.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg,#17630f,#3f9a2a) !important; box-shadow: 0 12px 26px rgba(31,122,26,.45); }
+.btn-success { background: linear-gradient(135deg,#5fa02a,#a6cf4a) !important; border: 0 !important; color:#143305 !important; box-shadow: 0 8px 20px rgba(114,170,45,.38); }
+.btn-info    { background: linear-gradient(135deg,#0f766e,#2fb08a) !important; border: 0 !important; box-shadow: 0 8px 20px rgba(15,118,110,.32); }
+.btn-warning { background: linear-gradient(135deg,#f2fc4a,#cde654) !important; border: 0 !important; color:#2b4a06 !important; }
+.btn-danger  { background: linear-gradient(135deg,#f43f5e,#dc2626) !important; border: 0 !important; }
+.btn-outline-primary { --bs-btn-color:#1f7a1a; --bs-btn-border-color:#bfe08a; --bs-btn-hover-bg:#1f7a1a; --bs-btn-hover-border-color:#1f7a1a; --bs-btn-active-bg:#17630f; --bs-btn-active-border-color:#17630f; background:#fff; }
+.btn-outline-primary:hover { background: linear-gradient(135deg,#1f7a1a,#4aa02c); border-color: transparent; }
+.btn-light { box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+.btn-lang { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.5); }
+
+/* ---------- แท็บ ---------- */
+#formTypeTabs { background: var(--g-pale); }
+#formTypeTabs .nav-link { color:#4d6b3a; }
+#formTypeTabs .nav-link.active { background: var(--grad-dark); color: var(--g-yellow); box-shadow: 0 6px 16px rgba(31,122,26,.35); }
+.dash-tab-btn.btn-primary { background: var(--grad-dark) !important; color: var(--g-yellow) !important; box-shadow: 0 8px 18px rgba(31,122,26,.35); }
+.dash-tab-btn.btn-outline-primary { background:#fff; border-color:#d3e6b4; color:#4d6b3a; }
+.dash-tab-btn.btn-outline-primary:hover { color:#fff; }
+
+/* ---------- ตาราง ---------- */
+.table-responsive { border: 0; box-shadow: 0 6px 22px rgba(31,122,26,.10); border-radius: 18px; }
+.table-custom-header thead, .table-custom-header th { background: linear-gradient(90deg,#dff0c2,#f2f9c8) !important; color:#1b5a14 !important; }
+.table-custom-header th { border-bottom: 3px solid var(--g-lime) !important; }
+.table-custom-header tbody tr:nth-child(even) td { background: rgba(238,247,224,.55); }
+.table-custom-header tbody tr:hover td { background: #e8f5c8 !important; }
+.table-custom-header tbody tr:hover td:first-child { box-shadow: inset 4px 0 0 var(--g-mid); }
+.table-avatar { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--g-lime); }
+.text-primary { color: #1f7a1a !important; }
+
+/* ---------- ฟอร์ม ---------- */
+.form-control, .form-select { border-width: 2px; border-color: #dbe8c8; background-color: #fcfef9; }
+.form-control:focus, .form-select:focus { border-color: var(--g-mid); box-shadow: 0 0 0 5px rgba(114,170,45,.22); background:#fff; }
+.form-label { font-weight: 600; }
+.modal-content, .offcanvas-profile { box-shadow: 0 30px 80px rgba(15,60,10,.35); }
+.profile-avatar-preview { box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--g-lime), var(--shadow-md); }
+.form-user-avatar { box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--g-mid), var(--shadow-md); }
+.profile-header-avatar { box-shadow: 0 0 0 3px var(--g-lime), 0 6px 16px rgba(0,0,0,.18); }
+
+/* ---------- ป้าย (badge) ---------- */
+.badge.bg-primary { background: #e1f2c6 !important; color: #1b5a14 !important; }
+.badge.bg-success { background: #d7f0b8 !important; color: #1b5a14 !important; }
+.badge.bg-warning { background: #fdf6b8 !important; color: #7a5a00 !important; }
+
+/* ---------- อื่นๆ ---------- */
+::-webkit-scrollbar-thumb { background: linear-gradient(#72aa2d,#cde654); border-radius: 8px; }
+.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background:#2a8a1f; border-color:#2a8a1f; }
+.flatpickr-day.today { border-color:#72aa2d; }
+.theme-float { color:#1f7a1a; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+
+/* ================= โหมดมืด (เขียวเข้ม) ================= */
+[data-bs-theme="dark"] {
+    --bs-primary-bg-subtle:#1d3a14; --bs-primary-border-subtle:#37661f; --bs-primary-text-emphasis:#b7e36a;
+    --bs-success-bg-subtle:#1d3a14; --bs-success-border-subtle:#37661f; --bs-success-text-emphasis:#b7e36a;
+    --bs-link-color:#b7e36a; --bs-link-hover-color:#d9f58a;
+}
+[data-bs-theme="dark"] body { background: linear-gradient(180deg,#245a17 0,#245a17 170px,#0b1a0e 170px,#07120a 100%) no-repeat !important; }
+[data-bs-theme="dark"] body::before { background: radial-gradient(circle,rgba(114,170,45,.5),transparent 70%); opacity:.4; }
+[data-bs-theme="dark"] body::after  { background: radial-gradient(circle,rgba(205,230,84,.3),transparent 70%); opacity:.35; }
+[data-bs-theme="dark"] body:has(#mainNav.d-none) { background: linear-gradient(135deg,#052e0b,#14532d,#3f6212,#14532d,#052e0b) !important; background-size: 400% 400% !important; }
+[data-bs-theme="dark"] .auth-box { background: rgba(14,28,18,.93) !important; box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 6px rgba(114,170,45,.35) !important; }
+[data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { border-color:#27402a; background-color:#0c1a10; }
+[data-bs-theme="dark"] .form-control:focus, [data-bs-theme="dark"] .form-select:focus { border-color:#8cc63f; background:#0c1a10; box-shadow: 0 0 0 5px rgba(140,198,63,.22); }
+[data-bs-theme="dark"] .table-custom-header thead, [data-bs-theme="dark"] .table-custom-header th { background: linear-gradient(90deg,#1c3a14,#2b4a12) !important; color:#cde654 !important; }
+[data-bs-theme="dark"] .table-custom-header th { border-bottom-color:#4a7a1f !important; }
+[data-bs-theme="dark"] .table-custom-header tbody tr:nth-child(even) td { background: rgba(114,170,45,.07); }
+[data-bs-theme="dark"] .table-custom-header tbody tr:hover td { background: #1c3318 !important; }
+[data-bs-theme="dark"] #formTypeTabs { background:#0c1a10; }
+[data-bs-theme="dark"] #formTypeTabs .nav-link { color:#9fb98a; }
+[data-bs-theme="dark"] #formTypeTabs .nav-link.active { background: var(--grad-dark); color: var(--g-yellow); }
+[data-bs-theme="dark"] .dash-tab-btn.btn-outline-primary { background: transparent; border-color:#27402a; color:#9fb98a; }
+[data-bs-theme="dark"] .table-avatar { box-shadow: 0 0 0 2px #0e1c12, 0 0 0 4px #72aa2d; }
+[data-bs-theme="dark"] .card { box-shadow: 0 6px 24px rgba(0,0,0,.4); }
+[data-bs-theme="dark"] .text-primary { color: #b7e36a !important; }
+[data-bs-theme="dark"] .btn-outline-primary { --bs-btn-color:#b7e36a; --bs-btn-border-color:#37661f; background: transparent; }
+[data-bs-theme="dark"] .badge.bg-primary { background: rgba(114,170,45,.22) !important; color:#cde654 !important; }
+[data-bs-theme="dark"] .badge.bg-success { background: rgba(114,170,45,.2) !important; color:#b7e36a !important; }
+[data-bs-theme="dark"] .badge.bg-warning { background: rgba(242,252,74,.15) !important; color:#f2fc4a !important; }
+[data-bs-theme="dark"] .theme-float { color:#f2fc4a; }
+</style>
 </head>
 <body>
 
@@ -770,12 +946,12 @@
                     <table class="table table-hover align-middle table-custom-header">
                         <thead>
                             <tr>
+                                <th id="thMyCreated">บันทึกเมื่อ</th>
                                 <th id="thMyType">ประเภท</th>
                                 <th id="thMyStart">เริ่มวันที่</th>
                                 <th id="thMyEnd">ถึงวันที่</th>
                                 <th id="thMyDays">จำนวน (วัน)</th>
                                 <th id="thMyReason">เหตุผล</th>
-                                <th id="thMyCreated">บันทึกเมื่อ</th>
                                 <th id="thMyStatus">สถานะ</th>
                                 <th id="thMyActions">จัดการ</th>
                             </tr>
@@ -841,13 +1017,13 @@
                     <table class="table table-hover align-middle table-custom-header">
                         <thead>
                             <tr>
+                                <th id="thCreated">บันทึกเมื่อ</th>
                                 <th id="thName">พนักงาน</th>
                                 <th id="thType">ประเภท</th>
                                 <th id="thStart">เริ่ม</th>
                                 <th id="thEnd">สิ้นสุด</th>
                                 <th id="thAmount">จำนวน</th>
                                 <th id="thReason">เหตุผล</th>
-                                <th id="thCreated">บันทึกเมื่อ</th>
                                 <th id="thStatus">สถานะ</th>
                                 <th id="thAction">จัดการ (Admin)</th>
                             </tr>
@@ -2968,12 +3144,12 @@
 
                         myHistoryTbody.innerHTML += `
                             <tr>
+                                <td>${leaveCreatedCell(l)}</td>
                                 <td>${typeBadge}</td>
                                 <td>${formatDateDisplay(l.startDate)}</td>
                                 <td>${formatDateDisplay(l.endDate)}</td>
                                 <td class="fw-bold text-primary">${days} ${lang.txtDayUnit}</td>
                                 <td>${l.reason}</td>
-                                <td>${leaveCreatedCell(l)}</td>
                                 <td>${statusBadge}${approvalInfo(l)}</td>
                                 <td>${userActionBtns}</td>
                             </tr>`;
@@ -3056,13 +3232,13 @@
 
                     adminTbody.innerHTML += `
                         <tr>
+                            <td>${leaveCreatedCell(l)}</td>
                             <td class="fw-bold">${l.empName}</td>
                             <td>${typeBadge}</td>
                             <td>${formatDateDisplay(l.startDate)}</td>
                             <td>${formatDateDisplay(l.endDate)}</td>
                             <td class="fw-bold text-primary">${days} ${lang.txtDayUnit}</td>
                             <td>${l.reason}</td>
-                            <td>${leaveCreatedCell(l)}</td>
                             <td>${statusBadge}${approvalInfo(l)}</td>
                             ${adminActionBtns}
                         </tr>`;
