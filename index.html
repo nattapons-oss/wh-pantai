@@ -78,6 +78,8 @@
         .brand-logo { width: 100%; max-width: 190px; height: auto; display: block; margin: 0 auto 14px auto; background: #fff; padding: 10px 16px; border-radius: 18px; box-shadow: 0 8px 24px rgba(15,23,42,.22); }
         .nav-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.85); cursor: pointer; transition: transform .2s; }
         .nav-avatar:hover { transform: scale(1.08); }
+        .photo-zoomable { cursor: zoom-in; transition: transform .15s; }
+        .photo-zoomable:hover { transform: scale(1.08); }
         .table-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line), 0 2px 6px rgba(15,23,42,.1); }
         .profile-avatar-preview { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 0 0 3px #6366f1, var(--shadow-md); margin: 0 auto 12px auto; display: block; }
         .form-user-avatar { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 0 0 3px #3b82f6, var(--shadow-md); margin: 0 auto 12px auto; display: block; }
@@ -1012,8 +1014,10 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
                     </div>
                 </div>
 
-                <h5 class="fw-bold mb-3 text-secondary" id="tableTitle">ประวัติการลาทั้งหมด</h5>
-                <div class="table-responsive">
+                <div id="allEmpSummary" class="mb-4"></div>
+
+                <h5 class="fw-bold mb-3 text-secondary" id="tableTitle" style="display:none;">ประวัติการลาทั้งหมด</h5>
+                <div class="table-responsive" id="leaveHistoryWrap" style="display:none;">
                     <table class="table table-hover align-middle table-custom-header">
                         <thead>
                             <tr>
@@ -1171,7 +1175,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
             <div class="modal-body p-4">
                 <div class="row g-4">
                     <div class="col-md-4 text-center">
-                        <img id="editEmpAvatarPreview" alt="" class="profile-avatar-preview shadow-sm">
+                        <img id="editEmpAvatarPreview" alt="" class="profile-avatar-preview shadow-sm photo-zoomable" onclick="openPhotoViewer(this)" title="คลิกเพื่อดูรูปขนาดใหญ่">
                         <div class="d-grid gap-2 mt-2">
                             <label for="editEmpImageInput" class="btn btn-outline-primary btn-sm rounded-pill mb-0">📷 เปลี่ยนรูป / Change photo</label>
                             <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="clearEditEmpImage()">ใช้รูปเริ่มต้น / Default</button>
@@ -1299,6 +1303,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmXYT9w_dB0YcNXzN7SLVyd7Fw3gidAqSGKM0a2szBmir9ZGqN3NpxAQKCtR2xqQZTHg/exec";
@@ -2107,20 +2112,26 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
         reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
-                const MAX_WIDTH = 150;
-                const MAX_HEIGHT = 150;
-                let width = img.width;
-                let height = img.height;
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                // ลองขนาดใหญ่ก่อน แล้วลดลงจนข้อมูลไม่เกิน ~45,000 ตัวอักษร (กันชนขีดจำกัด 50,000 ตัวอักษรต่อเซลล์ของ Google Sheets)
+                const tries = [[480, 0.85], [420, 0.8], [360, 0.78], [300, 0.72], [240, 0.7], [180, 0.7], [150, 0.65]];
+                const LIMIT = 45000;
+                let out = '';
+                for (const [max, q] of tries) {
+                    let width = img.width, height = img.height;
+                    const ratio = Math.min(1, max / Math.max(width, height));
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    out = canvas.toDataURL('image/jpeg', q);
+                    if (out.length <= LIMIT) break;
                 }
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', 0.7));
+                callback(out);
             };
             img.src = e.target.result;
         };
@@ -2622,7 +2633,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
                     <tr>
                         <td class="fw-bold">
                             <div class="d-flex align-items-center justify-content-center gap-2">
-                                <img src="${(userAcc && userAcc.avatar) ? userAcc.avatar : defaultAvatar}" alt="" class="table-avatar">
+                                <img src="${(userAcc && userAcc.avatar) ? userAcc.avatar : defaultAvatar}" alt="" class="table-avatar photo-zoomable" data-name="${escHtml(emp.name)}" onclick="openPhotoViewer(this)" title="คลิกเพื่อดูรูปขนาดใหญ่">
                                 <div><span>${emp.name}</span>${emp.position ? `<div class="small text-muted fw-normal">${emp.position}</div>` : ''}${warnBadgeHtml(emp)}</div>
                             </div>
                         </td>
@@ -3245,6 +3256,203 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
                 });
             }
         }
+
+        // 6. สรุปการลาของพนักงานทุกคน (หน้าเดียว)
+        if (typeof renderAllEmpSummary === 'function') renderAllEmpSummary(leaves, emps, users, lang, adminYear);
+    }
+</script>
+<script>
+    /* ===== สรุปการลาของพนักงานทุกคนในหน้าเดียว (แดชบอร์ด & ประวัติ) — แยกรายปี/รายเดือนได้ ===== */
+    Object.assign(translations.th, { allSumTitle: "สรุปการลาของพนักงานทุกคน", allSumNo: "ลำดับ", allSumPhoto: "รูป", allSumName: "ชื่อ", allSumPersonal: "ลากิจ", allSumVacation: "ลาพักร้อน", allSumSick: "ลาป่วย", allSumNoteYear: "* นับเฉพาะรายการที่อนุมัติแล้ว แสดงเป็น ใช้ไป/โควต้า (คงเหลือ)", allSumNoteMonth: "* นับเฉพาะรายการที่อนุมัติแล้ว จัดเข้าเดือนตามวันที่เริ่มลา (นับตามช่วงเดือนที่เลือก) บรรทัดเล็กคือยอดสะสมทั้งปี (ใช้ไป/โควต้า)", allSumEmpty: "ยังไม่มีข้อมูลพนักงาน", allSumYear: "ปี", allSumWholeYear: "ทั้งปี", allSumFrom: "ตั้งแต่เดือน", allSumTo: "ถึงเดือน", allSumPosition: "ตำแหน่ง", allSumPeriod: "ช่วงเวลา", allSumExport: "Export Excel", allSumUsedRange: "ใช้ในช่วงที่เลือก", allSumUsedYear: "ใช้สะสมทั้งปี", allSumQuota: "โควต้า", allSumRemain: "คงเหลือ", allSumSheet: "สรุปการลา", allSumMonths: ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"] });
+    Object.assign(translations.en, { allSumTitle: "All Employees Leave Summary", allSumNo: "No.", allSumPhoto: "Photo", allSumName: "Name", allSumPersonal: "Personal", allSumVacation: "Annual", allSumSick: "Sick", allSumNoteYear: "* Approved leaves only. Shown as Used/Quota (Remaining)", allSumNoteMonth: "* Approved leaves only, counted in the month the leave starts. Small line = year-to-date (Used/Quota)", allSumEmpty: "No employees found", allSumYear: "Year", allSumWholeYear: "Whole year", allSumFrom: "From", allSumTo: "To", allSumPosition: "Position", allSumPeriod: "Period", allSumExport: "Export Excel", allSumUsedRange: "Used (selected range)", allSumUsedYear: "Used (year to date)", allSumQuota: "Quota", allSumRemain: "Remaining", allSumSheet: "Leave Summary", allSumMonths: ["January","February","March","April","May","June","July","August","September","October","November","December"] });
+    Object.assign(translations.mm, { allSumTitle: "ဝန်ထမ်းအားလုံး၏ ခွင့်အနှစ်ချုပ်", allSumNo: "စဉ်", allSumPhoto: "ဓာတ်ပုံ", allSumName: "အမည်", allSumPersonal: "ကိစ္စအရ", allSumVacation: "နှစ်ပတ်လည်", allSumSick: "နာမကျန်း", allSumNoteYear: "* အတည်ပြုပြီးသော ခွင့်များသာ။ သုံးပြီး/ခွင့်ရက် (ကျန်ရှိ)", allSumNoteMonth: "* အတည်ပြုပြီးသော ခွင့်များသာ၊ စတင်သောလအလိုက် ရေတွက်သည်။ စာလုံးသေးသည် နှစ်စုစုပေါင်း (သုံးပြီး/ခွင့်ရက်)", allSumEmpty: "ဝန်ထမ်း မရှိသေးပါ", allSumYear: "နှစ်", allSumWholeYear: "တစ်နှစ်လုံး", allSumFrom: "မှ", allSumTo: "ထိ", allSumPosition: "ရာထူး", allSumPeriod: "ကာလ", allSumExport: "Export Excel", allSumUsedRange: "ရွေးချယ်ထားသောကာလ သုံးပြီး", allSumUsedYear: "နှစ်စုစုပေါင်း သုံးပြီး", allSumQuota: "ခွင့်ရက်", allSumRemain: "ကျန်ရှိ", allSumSheet: "ခွင့်အနှစ်ချုပ်", allSumMonths: ["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","သြဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"] });
+
+    let allSumExportData = null;
+    let allSumFrom = 1, allSumTo = 12; // ช่วงเดือนที่เลือก (1-12); 1-12 = ทั้งปี
+
+    function setAllSumRange(which, v) {
+        v = parseInt(v, 10);
+        if (which === 'from') { allSumFrom = v; if (allSumTo < v) allSumTo = v; }
+        else { allSumTo = v; if (allSumFrom > v) allSumFrom = v; }
+        loadLeaves();
+    }
+
+    function renderAllEmpSummary(leaves, emps, users, lang, adminYear) {
+        const box = document.getElementById('allEmpSummary');
+        if (!box) return;
+        const t = k => lang[k] || translations.th[k] || '';
+        const months = lang.allSumMonths || translations.th.allSumMonths;
+        const year = (adminYear && adminYear !== 'ALL') ? String(adminYear) : String(new Date().getFullYear());
+        const monthly = !(allSumFrom === 1 && allSumTo === 12);
+
+        const filterEl = document.getElementById('adminEmpFilter');
+        const selName = filterEl ? String(filterEl.value || 'ALL').trim() : 'ALL';
+        // เลือกคนเดียว → ซ่อนตารางสรุป แล้วโชว์ประวัติการลาของคนนั้น / เลือกทุกคน → โชว์ตารางสรุป ซ่อนประวัติ
+        const single = selName !== 'ALL';
+        const hTitle = document.getElementById('tableTitle');
+        const hWrap = document.getElementById('leaveHistoryWrap');
+        if (hTitle) hTitle.style.display = single ? '' : 'none';
+        if (hWrap) hWrap.style.display = single ? '' : 'none';
+        if (single) { box.innerHTML = ''; return; }
+
+        const shownEmps = (selName === 'ALL')
+            ? (emps || [])
+            : (emps || []).filter(e => String(e.name || '').trim() === selName);
+
+        const rows = shownEmps.map(e => {
+            const name = String(e.name || '').trim();
+            const user = (users || []).find(u => String(u.fullName || '').trim() === name);
+            const avatar = (user && user.avatar) ? user.avatar : defaultAvatar;
+            const q = getQuotaForYear(e, year);
+            const used = { sick: 0, personal: 0, vacation: 0 };   // ตามช่วงที่เลือก (เดือน/ปี)
+            const ytd  = { sick: 0, personal: 0, vacation: 0 };   // สะสมทั้งปี
+            (leaves || []).forEach(l => {
+                if (l.status !== 'approved') return;
+                if (String(l.empName || '').trim() !== name) return;
+                const iso = parseDateToISO(l.startDate);
+                if (!iso.startsWith(year)) return;
+                if (ytd[l.leaveType] === undefined) return;
+                const d = getLeaveDaysVal(l);
+                ytd[l.leaveType] += d;
+                const m = parseInt(iso.slice(5, 7), 10);
+                if (m >= allSumFrom && m <= allSumTo) used[l.leaveType] += d;
+            });
+            const position = String(e.position || (user && user.position) || '').trim();
+            return { name, position, avatar, q, used, ytd };
+        });
+
+        const unit = lang.txtDayUnit || 'วัน';
+        const cell = (u, ytdVal, q, cls) => {
+            const quota = Number(q) || 0;
+            if (monthly) {
+                const remain = quota - ytdVal;
+                return `<td class="text-center">
+                    <span class="badge ${cls} px-3 py-2 fs-6">${u} ${unit}</span>
+                    <div class="small ${remain < 0 ? 'text-danger fw-bold' : 'text-muted'} mt-1">${ytdVal} / ${quota}</div>
+                </td>`;
+            }
+            const remain = quota - u;
+            return `<td class="text-center">
+                <span class="badge ${cls} px-3 py-2 fs-6">${u} / ${quota}</span>
+                <div class="small ${remain < 0 ? 'text-danger fw-bold' : 'text-muted'} mt-1">(${remain} ${unit})</div>
+            </td>`;
+        };
+
+        let body = '';
+        if (rows.length === 0) {
+            body = `<tr><td colspan="7" class="text-center text-muted p-4">${t('allSumEmpty')}</td></tr>`;
+        } else {
+            rows.forEach((r, i) => {
+                body += `<tr>
+                    <td class="text-center fw-bold">${i + 1}</td>
+                    <td class="text-center"><img src="${r.avatar}" alt="" class="photo-zoomable" data-name="${escHtml(r.name)}" onclick="openPhotoViewer(this)" title="คลิกเพื่อดูรูปขนาดใหญ่" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #dee2e6;"></td>
+                    <td class="fw-bold">${escHtml(r.name)}</td>
+                    <td>${escHtml(r.position) || '<span class="text-muted">-</span>'}</td>
+                    ${cell(r.used.personal, r.ytd.personal, r.q.personal, 'bg-warning text-dark')}
+                    ${cell(r.used.vacation, r.ytd.vacation, r.q.vacation, 'bg-success')}
+                    ${cell(r.used.sick, r.ytd.sick, r.q.sick, 'bg-danger')}
+                </tr>`;
+            });
+        }
+
+        const optsFor = sel => months.map((m, i) => `<option value="${i + 1}"${sel === i + 1 ? ' selected' : ''}>${m}</option>`).join('');
+        const rangeLabel = monthly
+            ? (allSumFrom === allSumTo ? months[allSumFrom - 1] : `${months[allSumFrom - 1]} – ${months[allSumTo - 1]}`) + ' '
+            : '';
+
+        allSumExportData = { rows, year, from: allSumFrom, to: allSumTo, t };
+
+        box.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                <h5 class="fw-bold mb-0 text-secondary"><i class="fa-solid fa-users me-2"></i>${t('allSumTitle')} (${rangeLabel}${t('allSumYear')} ${year})</h5>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="small fw-semibold text-secondary">${t('allSumFrom')}</span>
+                    <select class="form-select form-select-sm fw-bold shadow-sm" style="width:140px;" onchange="setAllSumRange('from', this.value)">${optsFor(allSumFrom)}</select>
+                    <span class="small fw-semibold text-secondary">${t('allSumTo')}</span>
+                    <select class="form-select form-select-sm fw-bold shadow-sm" style="width:140px;" onchange="setAllSumRange('to', this.value)">${optsFor(allSumTo)}</select>
+                    <button type="button" class="btn btn-success btn-sm fw-semibold shadow-sm" onclick="exportAllEmpSummary()"><i class="fa-solid fa-file-excel me-1"></i>${t('allSumExport')}</button>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height:520px;overflow-y:auto;">
+                <table class="table table-hover align-middle table-custom-header mb-1">
+                    <thead style="position:sticky;top:0;z-index:1;">
+                        <tr>
+                            <th class="text-center" style="width:70px;">${t('allSumNo')}</th>
+                            <th class="text-center" style="width:80px;">${t('allSumPhoto')}</th>
+                            <th>${t('allSumName')}</th>
+                            <th>${t('allSumPosition')}</th>
+                            <th class="text-center">${t('allSumPersonal')}</th>
+                            <th class="text-center">${t('allSumVacation')}</th>
+                            <th class="text-center">${t('allSumSick')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${body}</tbody>
+                </table>
+            </div>
+            <div class="small text-muted">${monthly ? t('allSumNoteMonth') : t('allSumNoteYear')}</div>`;
+    }
+
+    function exportAllEmpSummary() {
+        const d = allSumExportData;
+        if (!d || !d.rows.length) { alert((translations[currentLang] || translations.th).allSumEmpty || ''); return; }
+        const t = d.t;
+        const types = [['personal', t('allSumPersonal')], ['vacation', t('allSumVacation')], ['sick', t('allSumSick')]];
+
+        // ให้ตรงกับตารางที่แสดงบนหน้า: ลำดับ / ชื่อ / ตำแหน่ง / ลากิจ / ลาพักร้อน / ลาป่วย (ช่องลาเป็นจำนวนวันที่ลาในช่วงที่เลือกเท่านั้น)
+        const head = [t('allSumNo'), t('allSumName'), t('allSumPosition')];
+        types.forEach(([, label]) => head.push(label));
+        const aoa = [head];
+        d.rows.forEach((r, i) => {
+            const line = [i + 1, r.name, r.position];
+            types.forEach(([k]) => line.push(r.used[k]));
+            aoa.push(line);
+        });
+
+        // ระบุช่วงเดือนที่ดึงข้อมูลไว้บนหัวไฟล์
+        const monthNames = t('allSumMonths');
+        const rangeText = d.from === d.to ? monthNames[d.from - 1] : `${monthNames[d.from - 1]} – ${monthNames[d.to - 1]}`;
+        aoa.unshift([t('allSumTitle')], [`${t('allSumPeriod')}: ${rangeText} ${t('allSumYear')} ${d.year}`], []);
+
+        const p2 = n => String(n).padStart(2, '0');
+        const fileBase = `leave-summary_${d.year}_${p2(d.from)}-${p2(d.to)}`;
+
+        if (typeof XLSX !== 'undefined') {
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!cols'] = head.map((h, i) => ({ wch: i === 1 ? 26 : (i === 2 ? 22 : (i === 0 ? 8 : 14)) }));
+            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: head.length - 1 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: head.length - 1 } }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, t('allSumSheet').slice(0, 31));
+            XLSX.writeFile(wb, fileBase + '.xlsx');
+        } else {
+            // สำรอง: ถ้าโหลดไลบรารี Excel ไม่ได้ (ออฟไลน์) ให้ส่งออกเป็น CSV ที่ Excel เปิดได้
+            const csv = '\ufeff' + aoa.map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            a.download = fileBase + '.csv';
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+    }
+
+    /* ===== ดูรูปพนักงานขนาดใหญ่ ===== */
+    function openPhotoViewer(el) {
+        const src = typeof el === 'string' ? el : (el && el.src);
+        if (!src) return;
+        const name = (el && el.dataset && el.dataset.name) || '';
+        const old = document.getElementById('photoViewerOverlay');
+        if (old) old.remove();
+
+        const ov = document.createElement('div');
+        ov.id = 'photoViewerOverlay';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:zoom-out;';
+        ov.innerHTML = `
+            <button type="button" aria-label="Close" style="position:absolute;top:14px;right:18px;border:0;background:rgba(255,255,255,.15);color:#fff;width:42px;height:42px;border-radius:50%;font-size:22px;line-height:1;cursor:pointer;">&times;</button>
+            <img src="${src}" alt="" style="width:min(92vw,520px);max-height:80vh;object-fit:contain;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5);cursor:default;" onclick="event.stopPropagation()">
+            ${name ? `<div style="color:#fff;font-weight:700;font-size:1.15rem;margin-top:14px;text-shadow:0 1px 4px rgba(0,0,0,.6);">${escHtml(name)}</div>` : ''}`;
+        const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+        const onKey = ev => { if (ev.key === 'Escape') close(); };
+        ov.addEventListener('click', close);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(ov);
     }
 </script>
 <script>
