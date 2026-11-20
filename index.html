@@ -987,7 +987,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
             </div>
             <div class="card-body p-4">
                 <div id="adminEmpProfile"></div>
-                <div class="row mb-4">
+                <div class="row mb-4" id="adminStatCards" style="display:none;">
                     <div class="col-md-3">
                         <div class="card stat-card bg-primary p-3 shadow-sm text-center">
                             <h5 id="statTotalLeaves" class="opacity-75">การลาทั้งหมด</h5>
@@ -3291,6 +3291,8 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
         const single = selName !== 'ALL';
         const hTitle = document.getElementById('tableTitle');
         const hWrap = document.getElementById('leaveHistoryWrap');
+        const statCards = document.getElementById('adminStatCards');
+        if (statCards) statCards.style.display = single ? '' : 'none'; // การ์ดสรุปแสดงเฉพาะตอนเลือกรายบุคคล
         if (hTitle) hTitle.style.display = single ? '' : 'none';
         if (hWrap) hWrap.style.display = single ? '' : 'none';
         if (single) { box.innerHTML = ''; return; }
