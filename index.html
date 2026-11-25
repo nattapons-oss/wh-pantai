@@ -670,6 +670,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
                         <table class="table table-hover align-middle table-custom-header">
                             <thead>
                                 <tr>
+                                    <th class="text-center" style="width: 60px;" id="thUpNo">ลำดับ</th>
                                     <th id="thUpCreated">บันทึกเมื่อ</th>
                                     <th style="width: 60px;" id="thUpImg">รูป</th>
                                     <th id="thUpName">พนักงาน</th>
@@ -948,6 +949,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
                     <table class="table table-hover align-middle table-custom-header">
                         <thead>
                             <tr>
+                                <th class="text-center" style="width: 60px;" id="thMyNo">ลำดับ</th>
                                 <th id="thMyCreated">บันทึกเมื่อ</th>
                                 <th id="thMyType">ประเภท</th>
                                 <th id="thMyStart">เริ่มวันที่</th>
@@ -1021,6 +1023,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
                     <table class="table table-hover align-middle table-custom-header">
                         <thead>
                             <tr>
+                                <th class="text-center" style="width: 60px;" id="thNo">ลำดับ</th>
                                 <th id="thCreated">บันทึกเมื่อ</th>
                                 <th id="thName">พนักงาน</th>
                                 <th id="thType">ประเภท</th>
@@ -2987,10 +2990,10 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
             const activeLeaves = leaves.filter(leave => parseDateToISO(leave.endDate) >= todayStr);
 
             if(activeLeaves.length === 0) {
-                const colspanVal = (currentUser && currentUser.role === 'admin') ? 11 : 9;
+                const colspanVal = (currentUser && currentUser.role === 'admin') ? 12 : 10;
                 upcomingTbody.innerHTML = `<tr><td colspan="${colspanVal}" class="text-center text-muted p-4">${lang.noLeavesMsg}</td></tr>`;
             } else {
-                activeLeaves.forEach(leave => {
+                activeLeaves.forEach((leave, idx) => {
                     const days = getLeaveDaysVal(leave);
                     let typeLabel = leave.leaveType === 'sick' ? lang.optSick : (leave.leaveType === 'vacation' ? lang.optVacation : lang.optPersonal);
                     let typeBadge = getLeaveTypeBadge(leave.leaveType, typeLabel);
@@ -3012,6 +3015,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
 
                     upcomingTbody.innerHTML += `
                         <tr>
+                            <td class="text-center fw-bold">${idx + 1}</td>
                             <td>${leaveCreatedCell(leave)}</td>
                             <td><img src="${empAvatar}" alt="${leave.empName}" class="table-avatar shadow-sm"></td>
                             <td class="fw-bold">${leave.empName}</td>
@@ -3139,9 +3143,9 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
             if(myHistoryTbody) {
                 myHistoryTbody.innerHTML = '';
                 if(allMyLeaves.length === 0) {
-                    myHistoryTbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
+                    myHistoryTbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
                 } else {
-                    allMyLeaves.forEach(l => {
+                    allMyLeaves.forEach((l, idx) => {
                         const days = getLeaveDaysVal(l);
                         let typeLabel = l.leaveType === 'sick' ? lang.optSick : (l.leaveType === 'vacation' ? lang.optVacation : lang.optPersonal);
                         let typeBadge = getLeaveTypeBadge(l.leaveType, typeLabel);
@@ -3155,6 +3159,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
 
                         myHistoryTbody.innerHTML += `
                             <tr>
+                                <td class="text-center fw-bold">${idx + 1}</td>
                                 <td>${leaveCreatedCell(l)}</td>
                                 <td>${typeBadge}</td>
                                 <td>${formatDateDisplay(l.startDate)}</td>
@@ -3224,9 +3229,9 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
         if(adminTbody) {
             adminTbody.innerHTML = '';
             if(targetLeavesForTable.length === 0) {
-                adminTbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
+                adminTbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted p-4">${lang.noHistoryMsg}</td></tr>`;
             } else {
-                targetLeavesForTable.forEach(l => {
+                targetLeavesForTable.forEach((l, idx) => {
                     const days = getLeaveDaysVal(l);
                     let typeLabel = l.leaveType === 'sick' ? lang.optSick : (l.leaveType === 'vacation' ? lang.optVacation : lang.optPersonal);
                     let typeBadge = getLeaveTypeBadge(l.leaveType, typeLabel);
@@ -3243,6 +3248,7 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
 
                     adminTbody.innerHTML += `
                         <tr>
+                            <td class="text-center fw-bold">${idx + 1}</td>
                             <td>${leaveCreatedCell(l)}</td>
                             <td class="fw-bold">${l.empName}</td>
                             <td>${typeBadge}</td>
@@ -3462,15 +3468,15 @@ body:has(#mainNav.d-none)::after  { background: radial-gradient(circle,rgba(242,
     Object.assign(translations.en, { lblEmpPhoto: "📷 Choose Photo", lblEmpPass: "Password", lblEmpRole: "Role", empAccountHint: "Optional — fill in username and password to create a login account for this employee" });
     Object.assign(translations.mm, { lblEmpPhoto: "📷 ဓာတ်ပုံရွေးရန်", lblEmpPass: "စကားဝှက်", lblEmpRole: "ရာထူး", empAccountHint: "မဖြည့်လည်းရသည် — အကောင့်ဖွင့်ရန် Username နှင့် စကားဝှက်ကို ဖြည့်ပါ" });
 
-    Object.assign(translations.th, { lblEmpStart: "วันที่เริ่มงาน", lblEmpEnd: "วันที่ออกงาน (กรณีลาออก)", thEmpWork: "ช่วงเวลาทำงาน", thUpCreated: "บันทึกเมื่อ", thMyCreated: "บันทึกเมื่อ", thCreated: "บันทึกเมื่อ", txtApprovedAt: "อนุมัติเมื่อ", txtWorking: "ทำงานอยู่", txtResigned: "ลาออกแล้ว" });
+    Object.assign(translations.th, { lblEmpStart: "วันที่เริ่มงาน", lblEmpEnd: "วันที่ออกงาน (กรณีลาออก)", thEmpWork: "ช่วงเวลาทำงาน", thUpNo: "ลำดับ", thMyNo: "ลำดับ", thNo: "ลำดับ", thUpCreated: "บันทึกเมื่อ", thMyCreated: "บันทึกเมื่อ", thCreated: "บันทึกเมื่อ", txtApprovedAt: "อนุมัติเมื่อ", txtWorking: "ทำงานอยู่", txtResigned: "ลาออกแล้ว" });
     Object.assign(translations.th, { btnOpenAddEmp: "เพิ่มพนักงาน", thUpApproved: "อนุมัติเมื่อ", txtTenure: "อายุงาน", txtYearUnit: "ปี", txtMonthUnit: "เดือน", txtPending: "รออนุมัติ (วัน)", thEmpQuota: "สรุปการลาปีนี้ (ใช้ไป/โควต้า)" });
     Object.assign(translations.th, { lblRegPosition: "ตำแหน่งงาน / Position", lblProfPosition: "ตำแหน่งงาน", lblEmpPosition: "ตำแหน่งงาน", lblEmpBirth: "วันเกิด (ใช้คำนวณอายุ)", txtPosition: "ตำแหน่ง", txtDeptLbl: "ฝ่าย/แผนก", txtAge: "อายุ", txtQuotaYear: "โควต้าการลา ปี", txtUsed: "ใช้", txtRemain: "เหลือ" });
     Object.assign(translations.en, { lblRegPosition: "Position", lblProfPosition: "Position", lblEmpPosition: "Position", lblEmpBirth: "Birth Date (for age)", txtPosition: "Position", txtDeptLbl: "Department", txtAge: "Age", txtQuotaYear: "Leave quota", txtUsed: "Used", txtRemain: "Left" });
     Object.assign(translations.mm, { lblRegPosition: "ရာထူး", lblProfPosition: "ရာထူး", lblEmpPosition: "ရာထူး", lblEmpBirth: "မွေးသက္ကရာဇ် (အသက်တွက်ရန်)", txtPosition: "ရာထူး", txtDeptLbl: "ဌာန", txtAge: "အသက်", txtQuotaYear: "ခွင့်ရက် နှစ်", txtUsed: "သုံးပြီး", txtRemain: "ကျန်" });
     Object.assign(translations.en, { btnOpenAddEmp: "Add Employee", thUpApproved: "Approved At", txtTenure: "Tenure", txtYearUnit: "yr", txtMonthUnit: "mo", txtPending: "Pending (days)", thEmpQuota: "Leave Summary This Year (Used/Quota)" });
     Object.assign(translations.mm, { btnOpenAddEmp: "ဝန်ထမ်းထည့်ရန်", thUpApproved: "အတည်ပြုချိန်", txtTenure: "လုပ်သက်", txtYearUnit: "နှစ်", txtMonthUnit: "လ", txtPending: "စောင့်ဆိုင်းနေ (ရက်)", thEmpQuota: "ယခုနှစ် ခွင့်အနှစ်ချုပ် (သုံးပြီး/ခွင့်ရက်)" });
-    Object.assign(translations.en, { lblEmpStart: "Start Date", lblEmpEnd: "Resign Date (if resigned)", thEmpWork: "Employment Period", thUpCreated: "Submitted At", thMyCreated: "Submitted At", thCreated: "Submitted At", txtApprovedAt: "Approved at", txtWorking: "Active", txtResigned: "Resigned" });
-    Object.assign(translations.mm, { lblEmpStart: "အလုပ်စတင်သည့်ရက်", lblEmpEnd: "အလုပ်ထွက်သည့်ရက်", thEmpWork: "အလုပ်လုပ်ကိုင်ချိန်", thUpCreated: "တင်သည့်အချိန်", thMyCreated: "တင်သည့်အချိန်", thCreated: "တင်သည့်အချိန်", txtApprovedAt: "အတည်ပြုချိန်", txtWorking: "လုပ်ကိုင်နေဆဲ", txtResigned: "ထွက်ပြီး" });
+    Object.assign(translations.en, { lblEmpStart: "Start Date", lblEmpEnd: "Resign Date (if resigned)", thEmpWork: "Employment Period", thUpNo: "No.", thMyNo: "No.", thNo: "No.", thUpCreated: "Submitted At", thMyCreated: "Submitted At", thCreated: "Submitted At", txtApprovedAt: "Approved at", txtWorking: "Active", txtResigned: "Resigned" });
+    Object.assign(translations.mm, { lblEmpStart: "အလုပ်စတင်သည့်ရက်", lblEmpEnd: "အလုပ်ထွက်သည့်ရက်", thEmpWork: "အလုပ်လုပ်ကိုင်ချိန်", thUpNo: "စဉ်", thMyNo: "စဉ်", thNo: "စဉ်", thUpCreated: "တင်သည့်အချိန်", thMyCreated: "တင်သည့်အချိန်", thCreated: "တင်သည့်အချိန်", txtApprovedAt: "အတည်ပြုချိန်", txtWorking: "လုပ်ကိုင်နေဆဲ", txtResigned: "ထွက်ပြီး" });
 
     function formatDateTime(v) {
         if (!v) return '';
